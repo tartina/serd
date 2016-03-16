@@ -17,7 +17,6 @@
 #include "serd/serd.h"
 
 #include <stdbool.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -98,7 +97,7 @@ serd_env_set_base_uri(SerdEnv*        env,
 
 static inline SERD_PURE_FUNC SerdPrefix*
 serd_env_find(const SerdEnv* env,
-              const uint8_t* name,
+              const char*    name,
               size_t         name_len)
 {
 	for (size_t i = 0; i < env->n_prefixes; ++i) {
@@ -156,9 +155,9 @@ serd_env_set_prefix(SerdEnv*        env,
 }
 
 SerdStatus
-serd_env_set_prefix_from_strings(SerdEnv*       env,
-                                 const uint8_t* name,
-                                 const uint8_t* uri)
+serd_env_set_prefix_from_strings(SerdEnv*    env,
+                                 const char* name,
+                                 const char* uri)
 {
 	const SerdNode name_node = serd_node_from_string(SERD_LITERAL, name);
 	const SerdNode uri_node  = serd_node_from_string(SERD_URI, uri);
@@ -175,10 +174,8 @@ serd_env_qualify(const SerdEnv*  env,
 	for (size_t i = 0; i < env->n_prefixes; ++i) {
 		const SerdNode* const prefix_uri = &env->prefixes[i].uri;
 		if (uri->n_bytes >= prefix_uri->n_bytes) {
-			if (!strncmp((const char*)uri->buf,
-			             (const char*)prefix_uri->buf,
-			             prefix_uri->n_bytes)) {
-				*prefix = env->prefixes[i].name;
+			if (!strncmp(uri->buf, prefix_uri->buf, prefix_uri->n_bytes)) {
+				*prefix     = env->prefixes[i].name;
 				suffix->buf = uri->buf + prefix_uri->n_bytes;
 				suffix->len = uri->n_bytes - prefix_uri->n_bytes;
 				return true;
@@ -194,7 +191,7 @@ serd_env_expand(const SerdEnv*  env,
                 SerdChunk*      uri_prefix,
                 SerdChunk*      uri_suffix)
 {
-	const uint8_t* const colon = (const uint8_t*)memchr(
+	const char* const colon = (const char*)memchr(
 		curie->buf, ':', curie->n_bytes + 1);
 	if (curie->type != SERD_CURIE || !colon) {
 		return SERD_ERR_BAD_ARG;
@@ -231,9 +228,9 @@ serd_env_expand_node(const SerdEnv*  env,
 			return SERD_NODE_NULL;
 		}
 		const size_t len = prefix.len + suffix.len;
-		uint8_t*     buf = (uint8_t*)malloc(len + 1);
+		char*        buf = (char*)malloc(len + 1);
 		SerdNode     ret = { buf, len, 0, SERD_URI };
-		snprintf((char*)buf, ret.n_bytes + 1, "%s%s", prefix.buf, suffix.buf);
+		snprintf(buf, ret.n_bytes + 1, "%s%s", prefix.buf, suffix.buf);
 		return ret;
 	}
 	case SERD_BLANK:

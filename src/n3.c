@@ -926,7 +926,7 @@ read_BLANK_NODE_LABEL(SerdReader* reader, Ref* dest, bool* ate_dot)
 	const Ref ref = *dest =
 	    push_node(reader,
 	              SERD_BLANK,
-	              reader->bprefix ? (char*)reader->bprefix : "",
+	              reader->bprefix ? reader->bprefix : "",
 	              reader->bprefix_len);
 
 	int c = peek_byte(reader);  // First: (PN_CHARS | '_' | [0-9])
@@ -1461,7 +1461,7 @@ tokcmp(SerdReader* reader, Ref ref, const char* tok, size_t n)
 	if (!node || node->n_bytes != n) {
 		return -1;
 	}
-	return serd_strncasecmp((const char*)node->buf, tok, n);
+	return serd_strncasecmp(node->buf, tok, n);
 }
 
 SerdStatus

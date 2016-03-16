@@ -29,7 +29,7 @@
 typedef struct SerdByteSinkImpl {
 	SerdSink sink;
 	void*    stream;
-	uint8_t* buf;
+	char*    buf;
 	size_t   size;
 	size_t   block_size;
 } SerdByteSink;
@@ -43,7 +43,7 @@ serd_byte_sink_new(SerdSink sink, void* stream, size_t block_size)
 	bsink.size       = 0;
 	bsink.block_size = block_size;
 	bsink.buf        = ((block_size > 1)
-	                    ? (uint8_t*)serd_allocate_buffer(block_size)
+	                    ? (char*)serd_allocate_buffer(block_size)
 	                    : NULL);
 	return bsink;
 }
@@ -82,7 +82,7 @@ serd_byte_sink_write(const void* buf, size_t len, SerdByteSink* bsink)
 		// Write as much as possible into the remaining buffer space
 		memcpy(bsink->buf + bsink->size, buf, n);
 		bsink->size += n;
-		buf          = (const uint8_t*)buf + n;
+		buf          = (const char*)buf + n;
 		len         -= n;
 
 		// Flush page if buffer is full

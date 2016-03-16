@@ -28,8 +28,7 @@
 static inline bool
 chunk_equals(const SerdChunk* a, const SerdChunk* b)
 {
-	return a->len == b->len
-		&& !strncmp((const char*)a->buf, (const char*)b->buf, a->len);
+	return a->len == b->len && !strncmp(a->buf, b->buf, a->len);
 }
 
 static inline size_t
@@ -38,7 +37,7 @@ uri_path_len(const SerdURI* uri)
 	return uri->path_base.len + uri->path.len;
 }
 
-static inline uint8_t
+static inline char
 uri_path_at(const SerdURI* uri, size_t i)
 {
 	if (i < uri->path_base.len) {
@@ -66,8 +65,8 @@ uri_rooted_index(const SerdURI* uri, const SerdURI* root)
 	const size_t root_len        = uri_path_len(root);
 	size_t       last_root_slash = 0;
 	for (size_t i = 0; i < path_len && i < root_len; ++i) {
-		const uint8_t u = uri_path_at(uri, i);
-		const uint8_t r = uri_path_at(root, i);
+		const char u = uri_path_at(uri, i);
+		const char r = uri_path_at(root, i);
 
 		differ = differ || u != r;
 		if (r == '/') {
