@@ -169,7 +169,7 @@ bool
 serd_env_qualify(const SerdEnv*  env,
                  const SerdNode* uri,
                  SerdNode*       prefix,
-                 SerdChunk*      suffix)
+                 SerdStringView* suffix)
 {
 	for (size_t i = 0; i < env->n_prefixes; ++i) {
 		const SerdNode* const prefix_uri = &env->prefixes[i].uri;
@@ -188,8 +188,8 @@ serd_env_qualify(const SerdEnv*  env,
 SerdStatus
 serd_env_expand(const SerdEnv*  env,
                 const SerdNode* curie,
-                SerdChunk*      uri_prefix,
-                SerdChunk*      uri_suffix)
+                SerdStringView* uri_prefix,
+                SerdStringView* uri_suffix)
 {
 	const char* const colon = (const char*)memchr(
 		curie->buf, ':', curie->n_bytes + 1);
@@ -222,8 +222,8 @@ serd_env_expand_node(const SerdEnv*  env,
 		return serd_node_new_uri_from_node(node, &env->base_uri, &ignored);
 	}
 	case SERD_CURIE: {
-		SerdChunk prefix;
-		SerdChunk suffix;
+		SerdStringView prefix;
+		SerdStringView suffix;
 		if (serd_env_expand(env, node, &prefix, &suffix)) {
 			return SERD_NODE_NULL;
 		}
