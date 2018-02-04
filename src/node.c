@@ -118,8 +118,9 @@ serd_new_uri_from_node(const SerdNode* uri_node,
                        const SerdURI*  base,
                        SerdURI*        out)
 {
-	return (uri_node->type == SERD_URI && uri_node->buf)
-		? serd_new_uri_from_string(uri_node->buf, base, out)
+	const char* uri_str = serd_node_string(uri_node);
+	return (uri_node && uri_node->type == SERD_URI && uri_str)
+		? serd_new_uri_from_string(uri_str, base, out)
 		: SERD_NODE_NULL;
 }
 
@@ -354,13 +355,13 @@ serd_node_type(const SerdNode* node)
 const char*
 serd_node_string(const SerdNode* node)
 {
-	return node->buf;
+	return node ? node->buf : NULL;
 }
 
 size_t
 serd_node_length(const SerdNode* node)
 {
-	return node->n_bytes;
+	return node ? node->n_bytes : 0;
 }
 
 SerdNodeFlags

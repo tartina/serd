@@ -553,8 +553,8 @@ serd_node_type(const SerdNode* SERD_NULLABLE node);
 
 /// Return the string value of a node
 SERD_PURE_API
-const char* SERD_NONNULL
-serd_node_string(const SerdNode* SERD_NONNULL node);
+const char* SERD_NULLABLE
+serd_node_string(const SerdNode* SERD_NULLABLE node);
 
 /// Return the length of the string value of a node in bytes
 SERD_PURE_API
