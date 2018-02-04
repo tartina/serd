@@ -18,6 +18,7 @@
 #define SERD_READER_H
 
 #include "byte_source.h"
+#include "node.h"
 #include "stack.h"
 
 #include "serd/serd.h"
@@ -67,7 +68,7 @@ struct SerdReaderImpl {
 	Ref               rdf_first;
 	Ref               rdf_rest;
 	Ref               rdf_nil;
-	SerdNode          default_graph;
+	SerdNode*         default_graph;
 	SerdByteSource    source;
 	SerdStack         stack;
 	SerdSyntax        syntax;
@@ -102,7 +103,7 @@ SERD_PURE_FUNC size_t genid_size(SerdReader* reader);
 Ref                   blank_id(SerdReader* reader);
 void                  set_blank_id(SerdReader* reader, Ref ref, size_t buf_size);
 
-SerdNode* deref(SerdReader* reader, Ref ref);
+SERD_PURE_FUNC SerdNode* deref(SerdReader* reader, Ref ref);
 
 Ref pop_node(SerdReader* reader, Ref ref);
 
