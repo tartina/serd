@@ -17,8 +17,16 @@
 #ifndef SERD_INTERNAL_H
 #define SERD_INTERNAL_H
 
+#include "world.h"
+
 #include "serd/serd.h"
 
+#if defined(HAVE_POSIX_FADVISE) && defined(HAVE_FILENO)
+#   include <fcntl.h>
+#endif
+
+#include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 
 #define NS_XSD "http://www.w3.org/2001/XMLSchema#"
@@ -33,12 +41,16 @@
 /* Error reporting */
 
 static inline void
-serd_error(SerdErrorSink error_sink, void* handle, const SerdError* e)
+serd_error(const SerdWorld* world, const SerdError* e)
 {
-	if (error_sink) {
-		error_sink(handle, e);
+	if (world->error_sink) {
+		world->error_sink(world->error_handle, e);
 	} else {
-		fprintf(stderr, "error: %s:%u:%u: ", e->filename, e->line, e->col);
+		if (e->filename) {
+			fprintf(stderr, "error: %s:%u:%u: ", e->filename, e->line, e->col);
+		} else {
+			fprintf(stderr, "error: ");
+		}
 		vfprintf(stderr, e->fmt, *e->args);
 	}
 }

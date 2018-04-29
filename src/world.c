@@ -1,5 +1,5 @@
 /*
-  Copyright 2020 David Robillard <http://drobilla.net>
+  Copyright 2011-2020 David Robillard <http://drobilla.net>
 
   Permission to use, copy, modify, and/or distribute this software for any
   purpose with or without fee is hereby granted, provided that the above
@@ -14,21 +14,27 @@
   OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
-#undef NDEBUG
+#include "world.h"
 
-#include "serd/serd.h"
+#include <stdlib.h>
 
-#include <stddef.h>
-
-int
-main(void)
+SerdWorld*
+serd_world_new(void)
 {
-	serd_free(NULL);
-	serd_node_free(NULL);
-	serd_world_free(NULL);
-	serd_env_free(NULL);
-	serd_reader_free(NULL);
-	serd_writer_free(NULL);
+	return (SerdWorld*)calloc(1, sizeof(SerdWorld));
+}
 
-	return 0;
+void
+serd_world_free(SerdWorld* world)
+{
+	free(world);
+}
+
+void
+serd_world_set_error_sink(SerdWorld*    world,
+                          SerdErrorSink error_sink,
+                          void*         handle)
+{
+	world->error_sink   = error_sink;
+	world->error_handle = handle;
 }

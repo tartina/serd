@@ -173,6 +173,7 @@ lib_source = ['src/base64.c',
               'src/string.c',
               'src/system.c',
               'src/uri.c',
+              'src/world.c',
               'src/writer.c']
 
 
