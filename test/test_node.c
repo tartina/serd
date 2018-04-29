@@ -202,8 +202,7 @@ test_node_from_substring(void)
 	serd_node_free(a_b);
 }
 
-static void
-test_literal(void)
+static void test_literal(void)
 {
 	SerdNode* hello2 = serd_new_literal("hello\"", NULL, NULL);
 	assert(serd_node_length(hello2) == 6 &&
@@ -231,6 +230,16 @@ test_literal(void)
 	serd_node_free(eg_Thing);
 }
 
+static void
+test_blank(void)
+{
+	SerdNode* blank = serd_new_blank("b0");
+	assert(serd_node_length(blank) == 2);
+	assert(serd_node_flags(blank) == 0);
+	assert(!strcmp(serd_node_string(blank), "b0"));
+	serd_node_free(blank);
+}
+
 int
 main(void)
 {
@@ -242,6 +251,7 @@ main(void)
 	test_node_from_string();
 	test_node_from_substring();
 	test_literal();
+	test_blank();
 
 	printf("Success\n");
 	return 0;

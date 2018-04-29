@@ -447,7 +447,12 @@ serd_new_literal(const char* SERD_NONNULL      str,
                  const SerdNode* SERD_NULLABLE datatype,
                  const char* SERD_NULLABLE     lang);
 
-/// Simple wrapper for serd_new_uri() to resolve a URI node
+/// Create a new blank node
+SERD_API
+SerdNode* SERD_ALLOCATED
+serd_new_blank(const char* SERD_NONNULL str);
+
+/// Simple wrapper for serd_node_new_uri() to resolve a URI node
 SERD_API
 SerdNode* SERD_ALLOCATED
 serd_new_uri_from_node(const SerdNode* SERD_NONNULL uri_node,

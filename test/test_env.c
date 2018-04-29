@@ -34,6 +34,8 @@ count_prefixes(void* handle, const SerdNode* name, const SerdNode* uri)
 static void
 test_env(void)
 {
+	SerdWorld* world = serd_world_new();
+
 	SerdNode* u   = serd_new_string(SERD_URI, "http://example.org/foo");
 	SerdNode* b   = serd_new_string(SERD_CURIE, "invalid");
 	SerdNode* c   = serd_new_string(SERD_CURIE, "eg.2:b");
@@ -92,6 +94,7 @@ test_env(void)
 	serd_node_free(u);
 
 	serd_env_free(env);
+	serd_world_free(world);
 }
 
 int
