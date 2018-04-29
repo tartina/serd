@@ -443,13 +443,11 @@ serd_new_substring(SerdType                  type,
 */
 SERD_API
 SerdNode* SERD_ALLOCATED
-serd_new_literal(const char* SERD_NONNULL  str,
-                 const char* SERD_NULLABLE datatype,
-                 const char* SERD_NULLABLE lang);
+serd_new_literal(const char* SERD_NONNULL      str,
+                 const SerdNode* SERD_NULLABLE datatype,
+                 const char* SERD_NULLABLE     lang);
 
-/**
-   Simple wrapper for serd_new_uri() to resolve a URI node.
-*/
+/// Simple wrapper for serd_new_uri() to resolve a URI node
 SERD_API
 SerdNode* SERD_ALLOCATED
 serd_new_uri_from_node(const SerdNode* SERD_NONNULL uri_node,

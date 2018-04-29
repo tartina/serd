@@ -205,7 +205,9 @@ test_writer(const char* const path)
 		    iface->handle, 0, NULL, junk[i][0], junk[i][1], junk[i][2]));
 	}
 
-	SerdNode* t = serd_new_literal((char*)buf, "urn:Type", NULL);
+	SerdNode* urn_Type = serd_new_uri_from_string("urn:Type", NULL, NULL);
+
+	SerdNode* t = serd_new_literal((char*)buf, urn_Type, NULL);
 	SerdNode* l = serd_new_literal((char*)buf, NULL, "en");
 	const SerdNode* good[][5] = { { s, p, o },
 	                              { s, p, o },
@@ -241,6 +243,7 @@ test_writer(const char* const path)
 	serd_node_free(o);
 	serd_node_free(t);
 	serd_node_free(l);
+	serd_node_free(urn_Type);
 
 	// Test buffer sink
 	SerdBuffer buffer = { NULL, 0 };

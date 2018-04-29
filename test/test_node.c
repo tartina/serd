@@ -218,14 +218,17 @@ test_literal(void)
 	assert(!strcmp(serd_node_string(serd_node_language(hello_l)), "en"));
 	serd_node_free(hello_l);
 
-	SerdNode* hello_dt =
-	    serd_new_literal("hello_dt\"", "http://example.org/Thing", NULL);
+	SerdNode* eg_Thing =
+	    serd_new_uri_from_string("http://example.org/Thing", NULL, NULL);
+
+	SerdNode* hello_dt = serd_new_literal("hello_dt\"", eg_Thing, NULL);
 	assert(serd_node_length(hello_dt) == 9);
 	assert(!strcmp(serd_node_string(hello_dt), "hello_dt\""));
 	assert(serd_node_flags(hello_dt) == (SERD_HAS_QUOTE | SERD_HAS_DATATYPE));
 	assert(!strcmp(serd_node_string(serd_node_datatype(hello_dt)),
 	               "http://example.org/Thing"));
 	serd_node_free(hello_dt);
+	serd_node_free(eg_Thing);
 }
 
 int
