@@ -326,19 +326,15 @@ main(int argc, char** argv)
 	FILE* const    out_fd = stdout;
 	SerdEnv* const env    = serd_env_new(base);
 
-	SerdWriter* writer = serd_writer_new(output_syntax,
-	                                     output_style,
-	                                     env,
-	                                     &base_uri,
-	                                     (SerdWriteFunc)fwrite,
-	                                     out_fd);
+	SerdWriter* const writer = serd_writer_new(output_syntax,
+	                                           output_style,
+	                                           env,
+	                                           &base_uri,
+	                                           (SerdWriteFunc)fwrite,
+	                                           out_fd);
 
-	SerdReader* const reader = serd_reader_new(
-		input_syntax, writer, NULL,
-		(SerdBaseSink)serd_writer_set_base_uri,
-		(SerdPrefixSink)serd_writer_set_prefix,
-		(SerdStatementSink)serd_writer_write_statement,
-		(SerdEndSink)serd_writer_end_anon);
+	SerdReader* const reader =
+	    serd_reader_new(input_syntax, serd_writer_sink(writer));
 
 	serd_reader_set_strict(reader, !lax);
 	if (quiet) {

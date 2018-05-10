@@ -1039,8 +1039,8 @@ read_anon(SerdReader* reader, ReadContext ctx, bool subject, Ref* dest)
 			return r_err(reader, SERD_ERR_BAD_SYNTAX, "`.' inside blank\n");
 		}
 		read_ws_star(reader);
-		if (reader->end_sink) {
-			reader->end_sink(reader->handle, deref(reader, *dest));
+		if (reader->sink->end) {
+			reader->sink->end(reader->sink->handle, deref(reader, *dest));
 		}
 		*ctx.flags = old_flags;
 	}
@@ -1360,8 +1360,8 @@ read_base(SerdReader* reader, bool sparql, bool token)
 
 	Ref uri = 0;
 	TRY(st, read_IRIREF(reader, &uri));
-	if (reader->base_sink) {
-		TRY(st, reader->base_sink(reader->handle, deref(reader, uri)));
+	if (reader->sink->base) {
+		TRY(st, reader->sink->base(reader->sink->handle, deref(reader, uri)));
 	}
 	pop_node(reader, uri);
 
@@ -1398,10 +1398,10 @@ read_prefixID(SerdReader* reader, bool sparql, bool token)
 	Ref uri = 0;
 	TRY(st, read_IRIREF(reader, &uri));
 
-	if (reader->prefix_sink) {
-		st = reader->prefix_sink(reader->handle,
-		                         deref(reader, name),
-		                         deref(reader, uri));
+	if (reader->sink->prefix) {
+		st = reader->sink->prefix(reader->sink->handle,
+		                          deref(reader, name),
+		                          deref(reader, uri));
 	}
 	pop_node(reader, uri);
 	pop_node(reader, name);
