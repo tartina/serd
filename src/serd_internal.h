@@ -40,19 +40,4 @@
 
 /* Error reporting */
 
-static inline void
-serd_error(const SerdWorld* world, const SerdError* e)
-{
-	if (world->error_sink) {
-		world->error_sink(world->error_handle, e);
-	} else {
-		if (e->filename) {
-			fprintf(stderr, "error: %s:%u:%u: ", e->filename, e->line, e->col);
-		} else {
-			fprintf(stderr, "error: ");
-		}
-		vfprintf(stderr, e->fmt, *e->args);
-	}
-}
-
 #endif  // SERD_INTERNAL_H
