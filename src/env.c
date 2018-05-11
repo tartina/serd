@@ -14,6 +14,8 @@
   OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
+#include "env.h"
+
 #include "node.h"
 
 #include "serd/serd.h"
@@ -61,12 +63,15 @@ serd_env_free(SerdEnv* env)
 	free(env);
 }
 
-const SerdNode*
-serd_env_base_uri(const SerdEnv* env, SerdURI* out)
+const SerdURI*
+serd_env_get_parsed_base_uri(const SerdEnv* env)
 {
-	if (out) {
-		*out = env->base_uri;
-	}
+	return &env->base_uri;
+}
+
+const SerdNode*
+serd_env_base_uri(const SerdEnv* env)
+{
 	return env->base_uri_node;
 }
 
@@ -84,9 +89,11 @@ serd_env_set_base_uri(SerdEnv*        env,
 	}
 
 	// Resolve base URI and create a new node and URI for it
-	SerdURI   base_uri;
 	SerdNode* base_uri_node =
-	    serd_new_uri_from_node(uri, &env->base_uri, &base_uri);
+	    serd_new_resolved_uri_i(serd_node_string(uri), &env->base_uri);
+
+	SerdURI base_uri;
+	serd_uri_parse(serd_node_string(base_uri_node), &base_uri);
 
 	// Replace the current base URI
 	serd_node_free(env->base_uri_node);
@@ -145,13 +152,12 @@ serd_env_set_prefix(SerdEnv*        env,
 		serd_env_add(env, name, uri);
 	} else {
 		// Resolve relative URI and create a new node and URI for it
-		SerdURI   abs_uri;
-		SerdNode* abs_uri_node =
-		    serd_new_uri_from_node(uri, &env->base_uri, &abs_uri);
+		SerdNode* abs_uri =
+		    serd_new_resolved_uri_i(serd_node_string(uri), &env->base_uri);
 
 		// Set prefix to resolved (absolute) URI
-		serd_env_add(env, name, abs_uri_node);
-		serd_node_free(abs_uri_node);
+		serd_env_add(env, name, abs_uri);
+		serd_node_free(abs_uri);
 	}
 	return SERD_SUCCESS;
 }
@@ -161,8 +167,8 @@ serd_env_set_prefix_from_strings(SerdEnv*    env,
                                  const char* name,
                                  const char* uri)
 {
-	SerdNode* name_node = serd_new_string(SERD_LITERAL, name);
-	SerdNode* uri_node  = serd_new_string(SERD_URI, uri);
+	SerdNode* name_node = serd_new_string(name);
+	SerdNode* uri_node  = serd_new_uri(uri);
 
 	const SerdStatus st = serd_env_set_prefix(env, name_node, uri_node);
 
@@ -225,10 +231,8 @@ serd_env_expand_node(const SerdEnv*  env,
 	switch (node->type) {
 	case SERD_LITERAL:
 		break;
-	case SERD_URI: {
-		SerdURI ignored;
-		return serd_new_uri_from_node(node, &env->base_uri, &ignored);
-	}
+	case SERD_URI:
+		return serd_new_resolved_uri_i(serd_node_string(node), &env->base_uri);
 	case SERD_CURIE: {
 		SerdStringView prefix;
 		SerdStringView suffix;

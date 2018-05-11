@@ -178,7 +178,6 @@ test_writer(const char* const path)
 	                                     SERD_TURTLE,
 	                                     (SerdStyle)0,
 	                                     env,
-	                                     NULL,
 	                                     (SerdWriteFunc)fwrite,
 	                                     fd);
 	assert(writer);
@@ -186,7 +185,7 @@ test_writer(const char* const path)
 	serd_writer_chop_blank_prefix(writer, "tmp");
 	serd_writer_chop_blank_prefix(writer, NULL);
 
-	SerdNode* lit = serd_new_string(SERD_LITERAL, "hello");
+	SerdNode* lit = serd_new_string("hello");
 
 	const SerdSink* const iface = serd_writer_sink(writer);
 	assert(iface->base(iface->handle, lit));
@@ -194,9 +193,9 @@ test_writer(const char* const path)
 	assert(serd_writer_env(writer) == env);
 
 	uint8_t buf[] = { 0xEF, 0xBF, 0xBD, 0 };
-	SerdNode* s = serd_new_string(SERD_URI, "");
-	SerdNode* p = serd_new_string(SERD_URI, "http://example.org/pred");
-	SerdNode* o = serd_new_string(SERD_LITERAL, (char*)buf);
+	SerdNode* s = serd_new_uri("");
+	SerdNode* p = serd_new_uri("http://example.org/pred");
+	SerdNode* o = serd_new_string((char*)buf);
 
 	// Write 3 invalid statements (should write nothing)
 	const SerdNode* junk[][3] = { { s, o, o },
@@ -207,7 +206,7 @@ test_writer(const char* const path)
 		    iface->handle, 0, NULL, junk[i][0], junk[i][1], junk[i][2]));
 	}
 
-	SerdNode* urn_Type = serd_new_uri_from_string("urn:Type", NULL, NULL);
+	SerdNode* urn_Type = serd_new_uri("urn:Type");
 
 	SerdNode* t = serd_new_literal((char*)buf, urn_Type, NULL);
 	SerdNode* l = serd_new_literal((char*)buf, NULL, "en");
@@ -228,16 +227,17 @@ test_writer(const char* const path)
 
 	// Write statements with bad UTF-8 (should be replaced)
 	const char bad_str[] = { (char)0xFF, (char)0x90, 'h', 'i', 0 };
-	SerdNode*  bad_lit   = serd_new_string(SERD_LITERAL, bad_str);
-	SerdNode*  bad_uri   = serd_new_string(SERD_URI, bad_str);
+	SerdNode*  bad_lit   = serd_new_string(bad_str);
+	SerdNode*  bad_uri   = serd_new_uri(bad_str);
 	assert(!iface->statement(iface->handle, 0, NULL, s, p, bad_lit));
 	assert(!iface->statement(iface->handle, 0, NULL, s, p, bad_uri));
-	serd_node_free(bad_lit);
+
 	serd_node_free(bad_uri);
+	serd_node_free(bad_lit);
 
 	// Write 1 valid statement
 	serd_node_free(o);
-	o = serd_new_string(SERD_LITERAL, "hello");
+	o = serd_new_string("hello");
 	assert(!iface->statement(iface->handle, 0, NULL, s, p, o));
 
 	serd_writer_free(writer);
@@ -250,9 +250,9 @@ test_writer(const char* const path)
 	// Test buffer sink
 	SerdBuffer buffer = { NULL, 0 };
 	writer = serd_writer_new(
-		world, SERD_TURTLE, (SerdStyle)0, env, NULL, serd_buffer_sink, &buffer);
+		world, SERD_TURTLE, (SerdStyle)0, env, serd_buffer_sink, &buffer);
 
-	o = serd_new_string(SERD_URI, "http://example.org/base");
+	o = serd_new_uri("http://example.org/base");
 	assert(!serd_writer_set_base_uri(writer, o));
 
 	serd_node_free(o);
@@ -279,7 +279,7 @@ test_reader(const char* path)
 	SerdReader* reader = serd_reader_new(world, SERD_TURTLE, &sink);
 	assert(reader);
 
-	SerdNode* g = serd_new_string(SERD_URI, "http://example.org/");
+	SerdNode* g = serd_new_uri("http://example.org/");
 	serd_reader_set_default_graph(reader, g);
 	serd_reader_add_blank_prefix(reader, "tmp");
 

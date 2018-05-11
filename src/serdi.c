@@ -258,26 +258,19 @@ main(int argc, char** argv)
 	const SerdStyle output_style =
 	    choose_style(input_syntax, output_syntax, ascii, bulk_write, full_uris);
 
-	SerdURI   base_uri = SERD_URI_NULL;
-	SerdNode* base     = NULL;
+	SerdNode* base = NULL;
 	if (a < argc) {  // Base URI given on command line
-		base = serd_new_uri_from_string(
-			(const char*)argv[a], NULL, &base_uri);
+		base = serd_new_uri((const char*)argv[a]);
 	} else if (!from_string && !from_stdin) {  // Use input file URI
-		base = serd_new_file_uri(input, NULL, &base_uri);
+		base = serd_new_file_uri(input, NULL);
 	}
 
 	FILE* const       out_fd = stdout;
 	SerdWorld* const  world  = serd_world_new();
 	SerdEnv* const    env    = serd_env_new(base);
 
-	SerdWriter* const writer = serd_writer_new(world,
-	                                           output_syntax,
-	                                           output_style,
-	                                           env,
-	                                           &base_uri,
-	                                           (SerdWriteFunc)fwrite,
-	                                           out_fd);
+	SerdWriter* writer = serd_writer_new(
+	    world, output_syntax, output_style, env, (SerdWriteFunc)fwrite, out_fd);
 
 	SerdReader* const reader =
 	    serd_reader_new(world, input_syntax, serd_writer_sink(writer));
@@ -287,7 +280,7 @@ main(int argc, char** argv)
 		serd_world_set_error_sink(world, quiet_error_sink, NULL);
 	}
 
-	SerdNode* root = serd_new_string(SERD_URI, root_uri);
+	SerdNode* root = root_uri ? serd_new_uri(root_uri) : NULL;
 	serd_writer_set_root_uri(writer, root);
 	serd_writer_chop_blank_prefix(writer, chop_prefix);
 	serd_reader_add_blank_prefix(reader, add_prefix);

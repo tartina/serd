@@ -420,20 +420,26 @@ serd_uri_serialise_relative(const SerdURI* SERD_NONNULL  uri,
 */
 
 /**
-   Create a new node from `str`.
-*/
-SERD_API
-SerdNode* SERD_ALLOCATED
-serd_new_string(SerdType type, const char* SERD_NULLABLE str);
+   Create a new "simple" node that is just a string.
 
-/**
-   Create a new node from a prefix of `str`.
+   This can be used to create blank, CURIE, or URI nodes from an already
+   measured string or slice of a buffer, which avoids a strlen compared to the
+   friendly constructors.  This may not be used for literals since those must
+   be measured to set the SERD_HAS_NEWLINE and SERD_HAS_QUOTE flags.
 */
 SERD_API
 SerdNode* SERD_ALLOCATED
-serd_new_substring(SerdType                  type,
-                   const char* SERD_NULLABLE str,
-                   size_t                    len);
+serd_new_simple_node(SerdType type, const char* SERD_NONNULL str, size_t len);
+
+/// Create a new plain literal string node from `str`
+SERD_API
+SerdNode* SERD_ALLOCATED
+serd_new_string(const char* SERD_NONNULL str);
+
+/// Create a new plain literal string node from a prefix of `str`
+SERD_API
+SerdNode* SERD_ALLOCATED
+serd_new_substring(const char* SERD_NONNULL str, size_t len);
 
 /**
    Create a new literal node from `str`.
@@ -452,19 +458,31 @@ SERD_API
 SerdNode* SERD_ALLOCATED
 serd_new_blank(const char* SERD_NONNULL str);
 
-/// Simple wrapper for serd_node_new_uri() to resolve a URI node
+/// Create a new CURIE node
 SERD_API
 SerdNode* SERD_ALLOCATED
-serd_new_uri_from_node(const SerdNode* SERD_NONNULL uri_node,
-                       const SerdURI* SERD_NULLABLE base,
-                       SerdURI* SERD_NULLABLE       out);
+serd_new_curie(const char* SERD_NONNULL str);
 
-/// Simple wrapper for serd_new_uri() to resolve a URI string
+/// Create a new URI from a string
 SERD_API
 SerdNode* SERD_ALLOCATED
-serd_new_uri_from_string(const char* SERD_NULLABLE    str,
-                         const SerdURI* SERD_NULLABLE base,
-                         SerdURI* SERD_NULLABLE       out);
+serd_new_uri(const char* SERD_NONNULL str);
+
+/// Create a new URI from a string, resolved against a base URI
+SERD_API
+SerdNode* SERD_ALLOCATED
+serd_new_resolved_uri(const char* SERD_NONNULL      str,
+                      const SerdNode* SERD_NULLABLE base);
+
+/**
+   Resolve `node` against `base`.
+
+   If `node` is not a relative URI, an equivalent new node is returned.
+*/
+SERD_API
+SerdNode* SERD_ALLOCATED
+serd_node_resolve(const SerdNode* SERD_NONNULL  node,
+                  const SerdNode* SERD_NULLABLE base);
 
 /**
    Create a new file URI node from a file system path and optional hostname.
@@ -473,48 +491,28 @@ serd_new_uri_from_string(const char* SERD_NULLABLE    str,
    percent encoded as necessary.
 
    If `path` is relative, `hostname` is ignored.
-   If `out` is not NULL, it will be set to the parsed URI.
 */
 SERD_API
 SerdNode* SERD_ALLOCATED
 serd_new_file_uri(const char* SERD_NONNULL  path,
-                  const char* SERD_NULLABLE hostname,
-                  SerdURI* SERD_NULLABLE    out);
+                  const char* SERD_NULLABLE hostname);
 
 /**
-   Create a new node by serialising `uri` into a new string.
+   Create a new URI from a string, relative to a base URI.
 
-   @param uri The URI to serialise.
+   The URI is made relative iff if it a child of `base` and `root`.  The
+   optional `root` parameter must be a prefix of `base` and can be used keep
+   up-references ("../") within a certain namespace.
 
-   @param base Base URI to resolve `uri` against (or NULL for no resolution).
-
-   @param out Set to the parsing of the new URI (i.e. points only to
-   memory owned by the new returned node).
+   @param str URI string.
+   @param base Base URI to make `str` relative to, if possible.
+   @param root Optional root URI for resolution.
 */
 SERD_API
 SerdNode* SERD_ALLOCATED
-serd_new_uri(const SerdURI* SERD_NONNULL  uri,
-             const SerdURI* SERD_NULLABLE base,
-             SerdURI* SERD_NULLABLE       out);
-
-/**
-   Create a new node by serialising `uri` into a new relative URI.
-
-   @param uri The URI to serialise.
-
-   @param base Base URI to make `uri` relative to, if possible.
-
-   @param root Root URI for resolution (see serd_uri_serialise_relative()).
-
-   @param out Set to the parsing of the new URI (i.e. points only to
-   memory owned by the new returned node).
-*/
-SERD_API
-SerdNode* SERD_ALLOCATED
-serd_new_relative_uri(const SerdURI* SERD_NONNULL  uri,
-                      const SerdURI* SERD_NULLABLE base,
-                      const SerdURI* SERD_NULLABLE root,
-                      SerdURI* SERD_NULLABLE       out);
+serd_new_relative_uri(const char* SERD_NONNULL      str,
+                      const SerdNode* SERD_NULLABLE base,
+                      const SerdNode* SERD_NULLABLE root);
 
 /**
    Create a new node by serialising `d` into an xsd:decimal string
@@ -567,7 +565,7 @@ serd_node_free(SerdNode* SERD_NULLABLE node);
 /// Return the type of a node (SERD_URI, SERD_BLANK, or SERD_LITERAL)
 SERD_PURE_API
 SerdType
-serd_node_type(const SerdNode* SERD_NULLABLE node);
+serd_node_type(const SerdNode* SERD_NONNULL node);
 
 /// Return the string value of a node
 SERD_CONST_API
@@ -715,10 +713,9 @@ void
 serd_env_free(SerdEnv* SERD_NULLABLE env);
 
 /// Get the current base URI
-SERD_API
+SERD_PURE_API
 const SerdNode* SERD_NULLABLE
-serd_env_base_uri(const SerdEnv* SERD_NONNULL env,
-                  SerdURI* SERD_NULLABLE      out);
+serd_env_base_uri(const SerdEnv* SERD_NONNULL env);
 
 /// Set the current base URI
 SERD_API
@@ -916,7 +913,6 @@ serd_writer_new(SerdWorld* SERD_NONNULL      world,
                 SerdSyntax                   syntax,
                 SerdStyle                    style,
                 SerdEnv* SERD_NONNULL        env,
-                const SerdURI* SERD_NULLABLE base_uri,
                 SerdWriteFunc SERD_NONNULL   ssink,
                 void* SERD_NULLABLE          stream);
 

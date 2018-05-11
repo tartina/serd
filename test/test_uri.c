@@ -32,7 +32,7 @@ test_file_uri(const char* hostname,
 		expected_path = path;
 	}
 
-	SerdNode*   node         = serd_new_file_uri(path, hostname, 0);
+	SerdNode*   node         = serd_new_file_uri(path, hostname);
 	const char* node_str     = serd_node_string(node);
 	char*       out_hostname = NULL;
 	char*       out_path     = serd_file_uri_parse(node_str, &out_hostname);
@@ -69,57 +69,69 @@ test_uri_parsing(void)
 static void
 test_uri_from_string(void)
 {
-	assert(!serd_new_uri_from_string(NULL, NULL, NULL));
-
-	SerdURI   base_uri;
-	SerdNode* base = serd_new_uri_from_string("http://example.org/",
-	                                               NULL, &base_uri);
-	SerdNode* nil  = serd_new_uri_from_string(NULL, &base_uri, NULL);
-	SerdNode* nil2 = serd_new_uri_from_string("", &base_uri, NULL);
+	SerdNode* base      = serd_new_uri("http://example.org/a/b/c/");
+	SerdNode* not_a_uri = serd_new_string("hello");
+	SerdNode* nil       = serd_new_resolved_uri("", base);
+	assert(!serd_new_resolved_uri("", NULL));
+	assert(!serd_new_resolved_uri("", not_a_uri));
 	assert(serd_node_type(nil) == SERD_URI);
 	assert(!strcmp(serd_node_string(nil), serd_node_string(base)));
-	assert(serd_node_type(nil2) == SERD_URI);
-	assert(!strcmp(serd_node_string(nil2), serd_node_string(base)));
 	serd_node_free(nil);
-	serd_node_free(nil2);
+	serd_node_free(not_a_uri);
 	serd_node_free(base);
+}
+
+static void
+check_rel_uri(const char*     uri,
+              const SerdNode* base,
+              const SerdNode* root,
+              const char*     expected)
+{
+	SerdNode* rel = serd_new_relative_uri(uri, base, root);
+	const int ret = strcmp(serd_node_string(rel), expected);
+	serd_node_free(rel);
+	assert(!ret);
 }
 
 static void
 test_relative_uri(void)
 {
-	SerdURI   base_uri;
-	SerdNode* base = serd_new_uri_from_string("http://example.org/",
-	                                               NULL, &base_uri);
+	SerdNode* root = serd_new_uri("http://example.org/a/b/");
+	SerdNode* base = serd_new_uri("http://example.org/a/b/c/");
 
-	SerdNode* abs = serd_new_string(SERD_URI, "http://example.org/foo/bar");
-	SerdURI   abs_uri;
-	serd_uri_parse(serd_node_string(abs), &abs_uri);
+	check_rel_uri("http://example.org/a/b/c/foo", base, NULL, "foo");
+	check_rel_uri("http://example.org/a/", base, NULL, "../../");
+	check_rel_uri("http://example.org/a/", base, root, "http://example.org/a/");
+	check_rel_uri("http://example.org/", base, NULL, "../../../");
+	check_rel_uri("http://drobilla.net/a", base, NULL, "http://drobilla.net/a");
 
-	SerdURI   rel_uri;
-	SerdNode* rel = serd_new_relative_uri(&abs_uri, &base_uri, NULL, &rel_uri);
-	assert(!strcmp(serd_node_string(rel), "/foo/bar"));
+	serd_node_free(base);
+	serd_node_free(root);
+}
 
-	SerdNode* up = serd_new_relative_uri(&base_uri, &abs_uri, NULL, NULL);
-	assert(!strcmp(serd_node_string(up), "../"));
+static void
+test_uri_resolution(void)
+{
+	SerdNode* base      = serd_new_uri("http://example.org/a/b/c/");
+	SerdNode* nil       = serd_new_resolved_uri("", base);
+	SerdNode* not_a_uri = serd_new_string("hello");
+	SerdNode* root      = serd_new_uri("http://example.org/a/b/");
 
-	SerdNode* noup = serd_new_relative_uri(&base_uri, &abs_uri, &abs_uri, NULL);
-	assert(!strcmp(serd_node_string(noup), "http://example.org/"));
+	assert(!serd_node_resolve(nil, NULL));
+	assert(!serd_node_resolve(not_a_uri, base));
+	assert(!serd_node_resolve(nil, not_a_uri));
 
-	SerdNode* x = serd_new_string(SERD_URI, "http://example.org/foo/x");
-	SerdURI   x_uri;
-	serd_uri_parse(serd_node_string(x), &x_uri);
+	SerdNode* rel =
+	    serd_new_relative_uri("http://example.org/a/b/c/foo", base, NULL);
+	SerdNode* resolved = serd_node_resolve(rel, base);
+	assert(!strcmp(serd_node_string(resolved), "http://example.org/a/b/c/foo"));
 
-	SerdNode* x_rel = serd_new_relative_uri(&x_uri, &abs_uri, &abs_uri, NULL);
-	assert(!strcmp(serd_node_string(x_rel), "x"));
-
-	serd_node_free(x_rel);
-	serd_node_free(x);
-	serd_node_free(noup);
-	serd_node_free(up);
-	serd_node_free(abs);
+	serd_node_free(nil);
+	serd_node_free(not_a_uri);
+	serd_node_free(resolved);
 	serd_node_free(rel);
 	serd_node_free(base);
+	serd_node_free(root);
 }
 
 int
@@ -128,6 +140,7 @@ main(void)
 	test_uri_parsing();
 	test_uri_from_string();
 	test_relative_uri();
+	test_uri_resolution();
 
 	printf("Success\n");
 	return 0;
