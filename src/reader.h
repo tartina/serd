@@ -94,8 +94,6 @@ SERD_PURE_FUNC size_t genid_size(SerdReader* reader);
 SerdNode*             blank_id(SerdReader* reader);
 void                  set_blank_id(SerdReader* reader, SerdNode* node, size_t buf_size);
 
-SerdNode* pop_node(SerdReader* reader, const SerdNode* node);
-
 SerdStatus
 emit_statement(SerdReader* reader, ReadContext ctx, SerdNode* o);
 
@@ -150,7 +148,7 @@ static inline SerdStatus
 push_byte(SerdReader* reader, SerdNode* node, const int c)
 {
 	assert(c != EOF);
-	SERD_STACK_ASSERT_TOP(reader, ref);
+	SERD_STACK_ASSERT_TOP(reader, node);
 
 	char* const s = (char*)serd_stack_push(&reader->stack, 1);
 	if (!s) {
