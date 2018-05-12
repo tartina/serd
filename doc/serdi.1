@@ -1,4 +1,4 @@
-.TH SERDI 1 "05 Jan 2017"
+.TH SERDI 1 "06 Jan 2019"
 
 .SH NAME
 .B serdi \- Read and write RDF syntax
@@ -48,6 +48,12 @@ Parser stack size.
 Lax (non-strict) parsing.
 
 .TP
+.BR \-m
+Build and serialise a model.
+This loads the complete input data into memory before writing the output.
+This will normalize statement order, at the cost of performance and memory consumption.
+
+.TP
 .BR \-o " " \fISYNTAX\fR
 Write output as \fISYNTAX\fR.
 Valid values (case-insensitive): \*(lqturtle\*(rq, \*(lqntriples\*(rq, \*(lqtrig\*(rq, \*(lqnquads\*(rq.
@@ -63,6 +69,12 @@ Suppress all output except data.
 .TP
 .BR \-r " " \fIROOT_URI\fR
 Keep relative URIs within \fIROOT_URI\fR.
+
+.TP
+.BR \-S
+Stream model quickly without inlining.
+This only has an effect when a model is used, and disables searching and statement reordering for pretty printing.
+Statements will be written in simple sorted order, which is faster, but may result in less readable output in Turtle or TriG.
 
 .TP
 .BR \-s " " \fIINPUT\fR

@@ -60,10 +60,12 @@ print_usage(const char* name, bool error)
 	fprintf(os, "  -i SYNTAX    Input syntax: turtle/ntriples/trig/nquads.\n");
 	fprintf(os, "  -k BYTES     Parser stack size.\n");
 	fprintf(os, "  -l           Lax (non-strict) parsing.\n");
+	fprintf(os, "  -m           Build and serialise a model (no streaming).\n");
 	fprintf(os, "  -o SYNTAX    Output syntax: turtle/ntriples/nquads.\n");
 	fprintf(os, "  -p PREFIX    Add PREFIX to blank node IDs.\n");
 	fprintf(os, "  -q           Suppress all output except data.\n");
 	fprintf(os, "  -r ROOT_URI  Keep relative URIs within ROOT_URI.\n");
+	fprintf(os, "  -S           Stream model quickly without inlining.\n");
 	fprintf(os, "  -s INPUT     Parse INPUT as string (terminates options).\n");
 	fprintf(os, "  -v           Display version information and exit.\n");
 	return error ? 1 : 0;
@@ -91,7 +93,9 @@ main(int argc, char** argv)
 	bool           bulk_read     = true;
 	bool           bulk_write    = false;
 	bool           full_uris     = false;
+	bool           no_inline     = false;
 	bool           lax           = false;
+	bool           use_model     = false;
 	bool           quiet         = false;
 	size_t         stack_size    = 4194304;
 	const char*    add_prefix    = NULL;
@@ -114,10 +118,14 @@ main(int argc, char** argv)
 			return print_usage(argv[0], false);
 		} else if (argv[a][1] == 'l') {
 			lax = true;
+		} else if (argv[a][1] == 'm') {
+			use_model = true;
 		} else if (argv[a][1] == 'q') {
 			quiet = true;
 		} else if (argv[a][1] == 'v') {
 			return print_version();
+		} else if (argv[a][1] == 'S') {
+			no_inline = true;
 		} else if (argv[a][1] == 's') {
 			from_string = true;
 			++a;
@@ -202,6 +210,9 @@ main(int argc, char** argv)
 	SerdWorld* const world  = serd_world_new();
 	SerdEnv* const   env    = serd_env_new(base);
 
+	const SerdSerialisationFlags serialisation_flags =
+	    no_inline ? SERD_NO_INLINE_OBJECTS : 0;
+
 	SerdByteSink* const byte_sink = serd_byte_sink_new((SerdWriteFunc)fwrite,
 	                                                   out_fd,
 	                                                   bulk_write ? 4096 : 1);
@@ -214,10 +225,22 @@ main(int argc, char** argv)
 	                    (SerdWriteFunc)serd_byte_sink_write,
 	                    byte_sink);
 
-	SerdReader* const reader = serd_reader_new(world,
-	                                           input_syntax,
-	                                           serd_writer_sink(writer),
-	                                           stack_size);
+	SerdModel*      model    = NULL;
+	SerdSink*       inserter = NULL;
+	const SerdSink* sink     = NULL;
+	if (use_model) {
+		const SerdModelFlags flags =
+		    SERD_INDEX_SPO | (input_has_graphs ? SERD_INDEX_GRAPHS : 0) |
+		    (no_inline ? 0 : SERD_INDEX_OPS);
+		model    = serd_model_new(world, flags);
+		inserter = serd_inserter_new(model, env, NULL);
+		sink     = inserter;
+	} else {
+		sink = serd_writer_sink(writer);
+	}
+
+	SerdReader* const reader =
+	    serd_reader_new(world, input_syntax, sink, stack_size);
 
 	serd_reader_set_strict(reader, !lax);
 	if (quiet) {
@@ -252,6 +275,18 @@ main(int argc, char** argv)
 	}
 
 	serd_reader_finish(reader);
+
+	if (st <= SERD_FAILURE && use_model) {
+		const SerdSink* wsink = serd_writer_sink(writer);
+		serd_env_write_prefixes(env, wsink);
+
+		SerdRange* range = serd_model_all(model);
+		st = serd_range_serialise(range, wsink, serialisation_flags);
+		serd_range_free(range);
+	}
+
+	serd_sink_free(inserter);
+	serd_model_free(model);
 	serd_reader_free(reader);
 	serd_writer_free(writer);
 	serd_node_free(input_name);

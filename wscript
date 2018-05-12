@@ -28,8 +28,9 @@ post_tags    = ['Hacking', 'RDF', 'Serd']
 
 def options(ctx):
     ctx.load('compiler_c')
+    opt = ctx.configuration_options()
     ctx.add_flags(
-        ctx.configuration_options(),
+        opt,
         {'no-utils':     'do not build command line utilities',
          'stack-check':  'include runtime stack sanity checks',
          'static':       'build static library',
@@ -171,9 +172,13 @@ lib_source = ['src/base64.c',
               'src/byte_source.c',
               'src/cursor.c',
               'src/env.c',
+              'src/inserter.c',
+              'src/iter.c',
+              'src/model.c',
               'src/n3.c',
               'src/node.c',
               'src/nodes.c',
+              'src/range.c',
               'src/reader.c',
               'src/sink.c',
               'src/statement.c',
@@ -183,6 +188,7 @@ lib_source = ['src/base64.c',
               'src/uri.c',
               'src/world.c',
               'src/writer.c',
+              'src/zix/btree.c',
               'src/zix/digest.c',
               'src/zix/hash.c']
 
@@ -248,11 +254,14 @@ def build(bld):
                      ('test_cursor', 'test/test_cursor.c'),
                      ('test_env', 'test/test_env.c'),
                      ('test_free_null', 'test/test_free_null.c'),
+                     ('test_model', 'test/test_model.c'),
                      ('test_node', 'test/test_node.c'),
                      ('test_nodes', 'test/test_nodes.c'),
                      ('test_overflow', 'test/test_overflow.c'),
                      ('test_read_chunk', 'test/test_read_chunk.c'),
                      ('test_reader_writer', 'test/test_reader_writer.c'),
+                     ('test_sink', 'test/test_sink.c'),
+                     ('test_statement', 'test/test_statement.c'),
                      ('test_string', 'test/test_string.c'),
                      ('test_uri', 'test/test_uri.c')]:
             bld(features     = 'c cprogram',
@@ -524,6 +533,23 @@ def _option_combinations(options):
     return itertools.cycle(combinations)
 
 
+def _file_lines_equal(patha, pathb, subst_from='', subst_to=''):
+    import io
+
+    for path in (patha, pathb):
+        if not os.access(path, os.F_OK):
+            Logs.pprint('RED', 'error: missing file %s' % path)
+            return False
+
+    la = sorted(set(io.open(patha, encoding='utf-8').readlines()))
+    lb = sorted(set(io.open(pathb, encoding='utf-8').readlines()))
+    if la != lb:
+        autowaf.show_diff(la, lb, patha, pathb)
+        return False
+
+    return True
+
+
 def test_suite(ctx, base_uri, testdir, report, isyntax, options=[]):
     srcdir = ctx.path.abspath()
 
@@ -578,6 +604,17 @@ def test_suite(ctx, base_uri, testdir, report, isyntax, options=[]):
                 if report is not None:
                     report.write(earl_assertion(test, result, asserter))
 
+                if expected_return == 0:
+                    # Run model test for positive test (must succeed)
+                    out_path = action + '.model.out'
+                    check([command[0]] + ['-m'] + command[1:],
+                          stdout=out_path,
+                          name=action + ' model')
+
+                    if result and ((mf + 'result') in model[test]):
+                        check(lambda: _file_lines_equal(check_path, out_path),
+                              name=action + ' model check')
+
     ns_rdftest = 'http://www.w3.org/ns/rdftest#'
     for test_class, instances in instances.items():
         if test_class.startswith(ns_rdftest):
@@ -607,11 +644,14 @@ def test(tst):
         check(['./test_cursor'])
         check(['./test_env'])
         check(['./test_free_null'])
+        check(['./test_model'])
         check(['./test_node'])
         check(['./test_nodes'])
         check(['./test_overflow'])
         check(['./test_read_chunk'])
         check(['./test_reader_writer'])
+        check(['./test_sink'])
+        check(['./test_statement'])
         check(['./test_string'])
         check(['./test_uri'])
 
