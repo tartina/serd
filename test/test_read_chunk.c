@@ -82,7 +82,7 @@ main(void)
 	SerdWorld*     world = serd_world_new();
 	const SerdSink sink  = {NULL, on_base, on_prefix, on_statement, on_end};
 
-	SerdReader* reader = serd_reader_new(world, SERD_TURTLE, &sink);
+	SerdReader* reader = serd_reader_new(world, SERD_TURTLE, &sink, 4096);
 	assert(reader);
 
 	assert(!serd_reader_start_string(reader,

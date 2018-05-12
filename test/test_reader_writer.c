@@ -84,7 +84,7 @@ test_read_chunks(void)
 	FILE* const       f      = tmpfile();
 	static const char null   = 0;
 	SerdSink          sink   = {rt, NULL, NULL, test_sink, NULL};
-	SerdReader*       reader = serd_reader_new(world, SERD_TURTLE, &sink);
+	SerdReader*       reader = serd_reader_new(world, SERD_TURTLE, &sink, 4096);
 
 	assert(reader);
 	assert(f);
@@ -164,7 +164,7 @@ test_read_string(void)
 	SerdWorld*  world  = serd_world_new();
 	ReaderTest* rt     = (ReaderTest*)calloc(1, sizeof(ReaderTest));
 	SerdSink    sink   = {rt, NULL, NULL, test_sink, NULL};
-	SerdReader* reader = serd_reader_new(world, SERD_TURTLE, &sink);
+	SerdReader* reader = serd_reader_new(world, SERD_TURTLE, &sink, 4096);
 	assert(reader);
 
 	// Test reading a string that ends exactly at the end of input (no newline)
@@ -293,7 +293,7 @@ test_reader(const char* path)
 	SerdWorld*  world  = serd_world_new();
 	ReaderTest  rt     = { 0, NULL };
 	SerdSink    sink   = { &rt, NULL, NULL, test_sink, NULL };
-	SerdReader* reader = serd_reader_new(world, SERD_TURTLE, &sink);
+	SerdReader* reader = serd_reader_new(world, SERD_TURTLE, &sink, 4096);
 	assert(reader);
 
 	SerdNode* g = serd_new_uri("http://example.org/");
