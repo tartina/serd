@@ -1118,10 +1118,10 @@ read_object(SerdReader* reader, ReadContext* ctx, bool emit, bool* ate_dot)
 		o->flags = flags;
 	}
 
-	if (!ret && emit && simple) {
+	if (!ret && emit && simple && o) {
 		ret = emit_statement(reader, *ctx, o);
 	} else if (!ret && !emit) {
-		ctx->object   = o;
+		ctx->object = o;
 		return SERD_SUCCESS;
 	}
 
@@ -1347,6 +1347,7 @@ read_base(SerdReader* reader, bool sparql, bool token)
 	SerdNode* uri = NULL;
 	TRY(st, read_IRIREF(reader, &uri));
 	if (reader->sink->base) {
+		serd_node_zero_pad(uri);
 		TRY(st, reader->sink->base(reader->sink->handle, uri));
 	}
 
@@ -1385,6 +1386,8 @@ read_prefixID(SerdReader* reader, bool sparql, bool token)
 	TRY(st, read_IRIREF(reader, &uri));
 
 	if (reader->sink->prefix) {
+		serd_node_zero_pad(name);
+		serd_node_zero_pad(uri);
 		st = reader->sink->prefix(reader->sink->handle, name, uri);
 	}
 	if (!sparql) {
