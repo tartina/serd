@@ -166,6 +166,7 @@ lib_headers = ['src/reader.h']
 
 lib_source = ['src/base64.c',
               'src/byte_source.c',
+              'src/cursor.c',
               'src/env.c',
               'src/n3.c',
               'src/node.c',
@@ -235,6 +236,7 @@ def build(bld):
 
         # Test programs
         for prog in [('serdi_static', 'src/serdi.c'),
+                     ('test_cursor', 'test/test_cursor.c'),
                      ('test_env', 'test/test_env.c'),
                      ('test_free_null', 'test/test_free_null.c'),
                      ('test_node', 'test/test_node.c'),
@@ -568,6 +570,7 @@ def test(tst):
     srcdir = tst.path.abspath()
 
     with tst.group('Unit') as check:
+        check(['./test_cursor'])
         check(['./test_env'])
         check(['./test_free_null'])
         check(['./test_node'])
