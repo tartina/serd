@@ -75,6 +75,9 @@ extern "C" {
 /// Global library state
 typedef struct SerdWorldImpl SerdWorld;
 
+/// A subject, predicate, and object, with optional graph context
+typedef struct SerdStatementImpl SerdStatement;
+
 /// The origin of a statement in a document
 typedef struct SerdCursorImpl SerdCursor;
 
@@ -1077,6 +1080,48 @@ serd_writer_finish(SerdWriter* SERD_NONNULL writer);
 
 /**
    @}
+   @name Statement
+   @{
+*/
+
+/// Return the given node in `statement`
+SERD_PURE_API
+const SerdNode* SERD_NULLABLE
+serd_statement_node(const SerdStatement* SERD_NONNULL statement,
+                    SerdField                         field);
+
+/// Return the subject in `statement`
+SERD_PURE_API
+const SerdNode* SERD_NONNULL
+serd_statement_subject(const SerdStatement* SERD_NONNULL statement);
+
+/// Return the predicate in `statement`
+SERD_PURE_API
+const SerdNode* SERD_NONNULL
+serd_statement_predicate(const SerdStatement* SERD_NONNULL statement);
+
+/// Return the object in `statement`
+SERD_PURE_API
+const SerdNode* SERD_NONNULL
+serd_statement_object(const SerdStatement* SERD_NONNULL statement);
+
+/// Return the graph in `statement`
+SERD_PURE_API
+const SerdNode* SERD_NULLABLE
+serd_statement_graph(const SerdStatement* SERD_NONNULL statement);
+
+/// Return the source location where `statement` originated, or NULL
+SERD_PURE_API
+const SerdCursor* SERD_NULLABLE
+serd_statement_cursor(const SerdStatement* SERD_NONNULL statement);
+
+/**
+   @}
+   @}
+*/
+
+/**
+   @}
    @name Cursor
    @{
 */
@@ -1135,11 +1180,6 @@ serd_cursor_line(const SerdCursor* SERD_NONNULL cursor);
 SERD_PURE_API
 unsigned
 serd_cursor_column(const SerdCursor* SERD_NONNULL cursor);
-
-/**
-   @}
-   @}
-*/
 
 #ifdef __cplusplus
 #    if defined(__GNUC__)
