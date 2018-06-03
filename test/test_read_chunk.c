@@ -48,19 +48,13 @@ on_prefix(void* handle, const SerdNode* name, const SerdNode* uri)
 }
 
 static SerdStatus
-on_statement(void*              handle,
-             SerdStatementFlags flags,
-             const SerdNode*    graph,
-             const SerdNode*    subject,
-             const SerdNode*    predicate,
-             const SerdNode*    object)
+on_statement(void*                handle,
+             SerdStatementFlags   flags,
+             const SerdStatement* statement)
 {
 	(void)handle;
 	(void)flags;
-	(void)graph;
-	(void)subject;
-	(void)predicate;
-	(void)object;
+	(void)statement;
 
 	++n_statement;
 	return SERD_SUCCESS;

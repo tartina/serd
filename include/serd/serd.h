@@ -695,12 +695,10 @@ typedef SerdStatus (*SerdPrefixSink)(void* SERD_NULLABLE          handle,
 
    Called for every RDF statement in the serialisation.
 */
-typedef SerdStatus (*SerdStatementSink)(void* SERD_NULLABLE           handle,
-                                        SerdStatementFlags            flags,
-                                        const SerdNode* SERD_NULLABLE graph,
-                                        const SerdNode* SERD_NONNULL  subject,
-                                        const SerdNode* SERD_NONNULL  predicate,
-                                        const SerdNode* SERD_NONNULL  object);
+typedef SerdStatus (*SerdStatementSink)(
+	void* SERD_NULLABLE               handle,
+	SerdStatementFlags                flags,
+	const SerdStatement* SERD_NONNULL statement);
 
 /**
    Sink (callback) for anonymous node end markers
@@ -854,6 +852,48 @@ void
 serd_env_foreach(const SerdEnv* SERD_NONNULL env,
                  SerdPrefixSink SERD_NONNULL func,
                  void* SERD_NULLABLE         handle);
+
+/**
+   @}
+   @name Sink
+   @{
+*/
+
+/// Set the base URI
+SERD_API
+SerdStatus
+serd_sink_write_base(const SerdSink* SERD_NONNULL sink,
+                     const SerdNode* SERD_NONNULL uri);
+
+/// Set a namespace prefix
+SERD_API
+SerdStatus
+serd_sink_write_prefix(const SerdSink* SERD_NONNULL sink,
+                       const SerdNode* SERD_NONNULL name,
+                       const SerdNode* SERD_NONNULL uri);
+
+/// Write a statement
+SERD_API
+SerdStatus
+serd_sink_write_statement(const SerdSink* SERD_NONNULL      sink,
+                          SerdStatementFlags                flags,
+                          const SerdStatement* SERD_NONNULL statement);
+
+/// Write a statement from individual nodes
+SERD_API
+SerdStatus
+serd_sink_write(const SerdSink* SERD_NONNULL  sink,
+                SerdStatementFlags            flags,
+                const SerdNode* SERD_NONNULL  subject,
+                const SerdNode* SERD_NONNULL  predicate,
+                const SerdNode* SERD_NONNULL  object,
+                const SerdNode* SERD_NULLABLE graph);
+
+/// Mark the end of an anonymous node
+SERD_API
+SerdStatus
+serd_sink_write_end(const SerdSink* SERD_NONNULL sink,
+                    const SerdNode* SERD_NONNULL node);
 
 /**
    @}
