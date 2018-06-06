@@ -79,6 +79,7 @@ def configure(conf):
             ],
             'msvc': [
                 '/wd4061',  # enumerator in switch is not explicitly handled
+                '/wd4200',  # nonstandard: zero-sized array in struct/union
                 '/wd4365',  # signed/unsigned mismatch
                 '/wd4514',  # unreferenced inline function has been removed
                 '/wd4710',  # function not inlined
