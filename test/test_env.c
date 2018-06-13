@@ -64,7 +64,7 @@ test_env(void)
 	assert(!strcmp(serd_node_string(xu), "http://example.org/foo"));
 	serd_node_free(xu);
 
-	SerdNode* badpre  = serd_new_curie("hm:what");
+	SerdNode* badpre = serd_new_curie("hm:what");
 	SerdNode* xbadpre = serd_env_expand_node(env, badpre);
 	assert(!xbadpre);
 

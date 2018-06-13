@@ -490,16 +490,54 @@ SerdNode* SERD_ALLOCATED
 serd_new_substring(const char* SERD_NONNULL str, size_t len);
 
 /**
-   Create a new literal node from `str`.
+   Create a new literal node from substrings.
 
-   Either `datatype` or `lang` can be given, but not both, unless `datatype` is
-   rdf:langString in which case it is ignored.
+   This is a low-level constructor which can be used for constructing a literal
+   from slices of a buffer (for example, directly from a Turtle literal)
+   without copying.  In most cases, applications should use the simpler
+   serd_new_plain_literal() or serd_new_typed_literal().
+
+   Either `datatype_uri` or `lang` can be given, but not both, unless
+   `datatype_uri` is rdf:langString in which case it is ignored.
+
+   @param str Literal body string.
+   @param str_len Length of `str` in bytes.
+   @param datatype_uri Full datatype URI, or NULL.
+   @param datatype_uri_len Length of `datatype_uri` in bytes.
+   @param lang Language string.
+   @param lang_len Length of `lang` in bytes.
 */
 SERD_API
 SerdNode* SERD_ALLOCATED
-serd_new_literal(const char* SERD_NONNULL      str,
-                 const SerdNode* SERD_NULLABLE datatype,
-                 const char* SERD_NULLABLE     lang);
+serd_new_literal(const char* SERD_NONNULL  str,
+                 size_t                    str_len,
+                 const char* SERD_NULLABLE datatype_uri,
+                 size_t                    datatype_uri_len,
+                 const char* SERD_NULLABLE lang,
+                 size_t                    lang_len);
+
+/**
+   Create a new literal node from `str`.
+
+   A plain literal has no datatype, but may have a language tag.  The `lang`
+   may be NULL, in which case this is equivalent to `serd_new_string()`.
+*/
+SERD_API
+SerdNode* SERD_ALLOCATED
+serd_new_plain_literal(const char* SERD_NONNULL  str,
+                       const char* SERD_NULLABLE lang);
+
+/**
+   Create a new typed literal node from `str`.
+
+   A typed literal has no language tag, but may have a datatype.  The
+   `datatype` may be NULL, in which case this is equivalent to
+   `serd_new_string()`.
+*/
+SERD_API
+SerdNode* SERD_ALLOCATED
+serd_new_typed_literal(const char* SERD_NONNULL      str,
+                       const SerdNode* SERD_NULLABLE datatype);
 
 /// Create a new blank node
 SERD_API

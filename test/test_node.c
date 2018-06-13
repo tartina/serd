@@ -178,9 +178,10 @@ test_blob_to_node(void)
 static void
 test_node_equals(void)
 {
-	const uint8_t replacement_char_str[] = {0xEF, 0xBF, 0xBD, 0};
-	SerdNode*     lhs = serd_new_string((const char*)replacement_char_str);
-	SerdNode*     rhs = serd_new_string("123");
+	static const uint8_t replacement_char_str[] = { 0xEF, 0xBF, 0xBD, 0 };
+
+	SerdNode* lhs = serd_new_string((const char*)replacement_char_str);
+	SerdNode* rhs = serd_new_string("123");
 	assert(!serd_node_equals(lhs, rhs));
 
 	SerdNode* qnode = serd_new_curie("foo:bar");
@@ -230,28 +231,42 @@ test_simple_node(void)
 static void
 test_literal(void)
 {
-	SerdNode* hello2 = serd_new_literal("hello\"", NULL, NULL);
+	SerdNode* hello2 = serd_new_string("hello\"");
+	assert(!serd_new_typed_literal("bad type", hello2));
+
 	assert(serd_node_length(hello2) == 6 &&
 	       serd_node_flags(hello2) == SERD_HAS_QUOTE &&
 	       !strcmp(serd_node_string(hello2), "hello\""));
+
+	SerdNode* hello3 = serd_new_plain_literal("hello\"", NULL);
+	assert(serd_node_equals(hello2, hello3));
+
+	SerdNode* hello4 = serd_new_typed_literal("hello\"", NULL);
+	assert(serd_node_equals(hello4, hello2));
+
+	serd_node_free(hello4);
+	serd_node_free(hello3);
 	serd_node_free(hello2);
 
-	SerdNode* hello_l = serd_new_literal("hello_l\"", NULL, "en");
-	assert(serd_node_length(hello_l) == 8);
-	assert(!strcmp(serd_node_string(hello_l), "hello_l\""));
-	assert(serd_node_flags(hello_l) == (SERD_HAS_QUOTE | SERD_HAS_LANGUAGE));
-	assert(!strcmp(serd_node_string(serd_node_language(hello_l)), "en"));
-	serd_node_free(hello_l);
+	const char* lang_lit_str = "\"Hello\"@en";
+	SerdNode*   sliced_lang_lit =
+	    serd_new_literal(lang_lit_str + 1, 5, NULL, 0, lang_lit_str + 8, 2);
+	assert(!strcmp(serd_node_string(sliced_lang_lit), "Hello"));
+	assert(
+	    !strcmp(serd_node_string(serd_node_language(sliced_lang_lit)), "en"));
+	serd_node_free(sliced_lang_lit);
 
-	SerdNode* eg_Thing = serd_new_uri("http://example.org/Thing");
-	SerdNode* hello_dt = serd_new_literal("hello_dt\"", eg_Thing, NULL);
-	assert(serd_node_length(hello_dt) == 9);
-	assert(!strcmp(serd_node_string(hello_dt), "hello_dt\""));
-	assert(serd_node_flags(hello_dt) == (SERD_HAS_QUOTE | SERD_HAS_DATATYPE));
-	assert(!strcmp(serd_node_string(serd_node_datatype(hello_dt)),
-	               "http://example.org/Thing"));
-	serd_node_free(hello_dt);
-	serd_node_free(eg_Thing);
+	const char* type_lit_str = "\"Hallo\"^^<http://example.org/Greeting>";
+	SerdNode*   sliced_type_lit =
+	    serd_new_literal(type_lit_str + 1, 5, type_lit_str + 10, 27, NULL, 0);
+	assert(!strcmp(serd_node_string(sliced_type_lit), "Hallo"));
+	assert(!strcmp(serd_node_string(serd_node_datatype(sliced_type_lit)),
+	               "http://example.org/Greeting"));
+	serd_node_free(sliced_type_lit);
+
+	SerdNode* plain_lit = serd_new_literal("Plain", 5, NULL, 0, NULL, 0);
+	assert(!strcmp(serd_node_string(plain_lit), "Plain"));
+	serd_node_free(plain_lit);
 }
 
 static void

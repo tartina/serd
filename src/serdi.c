@@ -230,7 +230,7 @@ main(int argc, char** argv)
 
 	SerdNode* base = NULL;
 	if (a < argc) {  // Base URI given on command line
-		base = serd_new_uri((const char*)argv[a]);
+		base = serd_new_uri(argv[a]);
 	} else if (!from_string && !from_stdin) {  // Use input file URI
 		base = serd_new_file_uri(input, NULL);
 	}

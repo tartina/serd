@@ -221,8 +221,8 @@ test_writer(const char* const path)
 
 	SerdNode* urn_Type = serd_new_uri("urn:Type");
 
-	SerdNode* t = serd_new_literal((char*)buf, urn_Type, NULL);
-	SerdNode* l = serd_new_literal((char*)buf, NULL, "en");
+	SerdNode* t = serd_new_typed_literal((char*)buf, urn_Type);
+	SerdNode* l = serd_new_plain_literal((char*)buf, "en");
 	const SerdNode* good[][5] = { { s, p, o },
 	                              { s, p, o },
 	                              { s, p, t },

@@ -236,7 +236,7 @@ serd_env_expand_node(const SerdEnv*  env,
 			    serd_env_expand_node(env, short_datatype);
 			if (datatype) {
 				SerdNode* ret =
-				    serd_new_literal(serd_node_string(node), datatype, NULL);
+				    serd_new_typed_literal(serd_node_string(node), datatype);
 				serd_node_free(datatype);
 				return ret;
 			}
