@@ -1,5 +1,5 @@
 /*
-  Copyright 2020 David Robillard <http://drobilla.net>
+  Copyright 2011-2020 David Robillard <http://drobilla.net>
 
   Permission to use, copy, modify, and/or distribute this software for any
   purpose with or without fee is hereby granted, provided that the above
@@ -14,23 +14,20 @@
   OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
-#undef NDEBUG
+#ifndef SERD_SINK_H
+#define SERD_SINK_H
 
 #include "serd/serd.h"
 
-#include <stddef.h>
+/**
+   An interface that receives a stream of RDF data.
+*/
+struct SerdSinkImpl {
+	void*             handle;
+	SerdBaseSink      base;
+	SerdPrefixSink    prefix;
+	SerdStatementSink statement;
+	SerdEndSink       end;
+};
 
-int
-main(void)
-{
-	serd_free(NULL);
-	serd_node_free(NULL);
-	serd_world_free(NULL);
-	serd_env_free(NULL);
-	serd_sink_free(NULL);
-	serd_reader_free(NULL);
-	serd_writer_free(NULL);
-	serd_cursor_free(NULL);
-
-	return 0;
-}
+#endif  // SERD_SINK_H

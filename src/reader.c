@@ -17,6 +17,7 @@
 #include "reader.h"
 
 #include "serd_internal.h"
+#include "sink.h"
 #include "statement.h"
 #include "system.h"
 #include "world.h"

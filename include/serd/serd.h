@@ -90,6 +90,9 @@ typedef struct SerdReaderImpl SerdReader;
 /// Streaming serialiser that writes a text stream as statements are pushed
 typedef struct SerdWriterImpl SerdWriter;
 
+/// An interface that receives a stream of RDF data
+typedef struct SerdSinkImpl SerdSink;
+
 /// Return status code
 typedef enum {
 	SERD_SUCCESS,        ///< No error
@@ -749,17 +752,6 @@ typedef SerdStatus (*SerdEndSink)(void* SERD_NULLABLE          handle,
                                   const SerdNode* SERD_NONNULL node);
 
 /**
-   An interface that receives a stream of RDF data.
-*/
-typedef struct SerdSink {
-	void* SERD_NULLABLE             handle;
-	SerdBaseSink SERD_NULLABLE      base;
-	SerdPrefixSink SERD_NULLABLE    prefix;
-	SerdStatementSink SERD_NULLABLE statement;
-	SerdEndSink SERD_NULLABLE       end;
-} SerdSink;
-
-/**
    @}
    @name World
    @{
@@ -886,6 +878,47 @@ serd_env_foreach(const SerdEnv* SERD_NONNULL env,
    @name Sink
    @{
 */
+
+/**
+   Create a new sink.
+
+   Initially, the sink has no set functions and will do nothing.  Use the
+   serd_sink_set_*_func functions to set handlers for various events.
+
+   @param handle Opaque handle that will be passed to sink functions.
+*/
+SERD_API
+SerdSink* SERD_ALLOCATED
+serd_sink_new(void* SERD_NULLABLE handle);
+
+/// Free `sink`
+SERD_API
+void
+serd_sink_free(SerdSink* SERD_NULLABLE sink);
+
+/// Set a function to be called when the base URI changes
+SERD_API
+SerdStatus
+serd_sink_set_base_func(SerdSink* SERD_NONNULL     sink,
+                        SerdBaseSink SERD_NULLABLE base_func);
+
+/// Set a function to be called when a namespace prefix is defined
+SERD_API
+SerdStatus
+serd_sink_set_prefix_func(SerdSink* SERD_NONNULL       sink,
+                          SerdPrefixSink SERD_NULLABLE prefix_func);
+
+/// Set a function to be called when a statement is emitted
+SERD_API
+SerdStatus
+serd_sink_set_statement_func(SerdSink* SERD_NONNULL          sink,
+                             SerdStatementSink SERD_NULLABLE statement_func);
+
+/// Set a function to be called when an anonymous node ends
+SERD_API
+SerdStatus
+serd_sink_set_end_func(SerdSink* SERD_NONNULL    sink,
+                       SerdEndSink SERD_NULLABLE end_func);
 
 /// Set the base URI
 SERD_API
