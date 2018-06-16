@@ -28,10 +28,12 @@ post_tags    = ['Hacking', 'RDF', 'Serd']
 
 def options(ctx):
     ctx.load('compiler_c')
+    ctx.load('compiler_cxx')
     opt = ctx.configuration_options()
     ctx.add_flags(
         opt,
         {'no-utils':     'do not build command line utilities',
+         'no-cxx':       'do not build C++ bindings',
          'stack-check':  'include runtime stack sanity checks',
          'static':       'build static library',
          'no-shared':    'do not build shared library',
@@ -43,10 +45,17 @@ def options(ctx):
 
 def configure(conf):
     conf.load('compiler_c', cache=True)
+
+    if not Options.options.no_cxx:
+        conf.load('compiler_cxx', cache=True)
+
     conf.load('autowaf', cache=True)
 
     if not autowaf.set_c_lang(conf, 'c11', mandatory=False):
         autowaf.set_c_lang(conf, 'c99')
+
+    if 'COMPILER_CXX' in conf.env:
+        autowaf.set_cxx_lang(conf, 'c++11')
 
     if Options.options.strict:
         # Check for programs used by lint target
@@ -104,6 +113,30 @@ def configure(conf):
                 '-Wno-suggest-attribute=format',
                 '-Wno-unused-macros',
             ])
+            conf.env.append_value('CXXFLAGS', [
+                '-Wno-suggest-attribute=format',
+            ])
+
+        autowaf.add_compiler_flags(conf.env, 'cxx', {
+            'clang': [
+                '-Wno-documentation-unknown-command',
+            ],
+            'gcc': [
+                '-Wno-multiple-inheritance',
+                '-Wno-suggest-attribute=pure',
+            ],
+            'msvc': [
+                '/wd4355',  # 'this' used in base member initializer list
+                '/wd4571',  # structured exceptions are no longer caught
+                '/wd4623',  # default constructor implicitly deleted
+                '/wd4625',  # copy constructor implicitly deleted
+                '/wd4626',  # assignment operator implicitly deleted
+                '/wd4710',  # function not inlined
+                '/wd4868',  # may not enforce left-to-right evaluation order
+                '/wd5026',  # move constructor implicitly deleted
+                '/wd5027',  # move assignment operator implicitly deleted
+            ]
+        })
 
     conf.env.update({
         'BUILD_UTILS': not Options.options.no_utils,
@@ -234,6 +267,21 @@ def build(bld):
     autowaf.build_pc(bld, 'SERD', SERD_VERSION, SERD_MAJOR_VERSION, [],
                      {'SERD_MAJOR_VERSION': SERD_MAJOR_VERSION})
 
+    if 'COMPILER_CXX' in bld.env:
+        # C++ Headers
+        includedirxx = '${INCLUDEDIR}/serdxx-%s/serd' % SERD_MAJOR_VERSION
+        bld.install_files(
+            includedirxx,
+            bld.path.ant_glob('bindings/cxx/include/serd/*.hpp'))
+        bld.install_files(
+            includedirxx + '/detail',
+            bld.path.ant_glob('bindings/cxx/include/serd/detail/*.hpp'))
+
+        # C++ wrapper pkgconfig file
+        autowaf.build_pc(bld, 'bindings/cxx/serdxx',
+                         SERD_VERSION, SERD_MAJOR_VERSION, [],
+                         {'SERD_MAJOR_VERSION': SERD_MAJOR_VERSION})
+
     defines = []
     lib_args = {'export_includes': ['include'],
                 'includes':        ['.', 'include', './src'],
@@ -314,6 +362,18 @@ def build(bld):
                 defines      = defines,
                 **test_args)
 
+        # C++ API test
+        if 'COMPILER_CXX' in bld.env:
+            cxx_test_args = test_args
+            cxx_test_args['includes'] += ['bindings/cxx/include']
+            cxx_test_args['cxxflags'] = coverage_flags
+            bld(features     = 'cxx cxxprogram',
+                source       = 'bindings/cxx/test/test_serd_cxx.cpp',
+                use          = 'libserd_profiled',
+                target       = 'test_serd_cxx',
+                defines      = defines,
+                **cxx_test_args)
+
     # Utilities
     if bld.env.BUILD_UTILS:
         obj = bld(features     = 'c cprogram',
@@ -384,8 +444,11 @@ def lint(ctx):
     if "CLANG_TIDY" in ctx.env and "clang" in ctx.env.CC[0]:
         Logs.info("Running clang-tidy")
         sources = glob.glob('include/serd/*.h*')
+        sources = glob.glob('bindings/cxx/include/serd/*.hpp')
+        sources = glob.glob('bindings/cxx/include/serd/detail/*.hpp')
         sources += glob.glob('src/*.c')
-        sources += glob.glob('test/*.c')
+        sources += glob.glob('test/*.c*')
+        sources += glob.glob('bindings/cxx/test/*.cpp')
         sources = list(map(os.path.abspath, sources))
         procs = []
         for source in sources:
@@ -759,6 +822,9 @@ def test(tst):
         check(['./test_string'])
         check(['./test_terse_write'])
         check(['./test_uri'])
+
+        if 'COMPILER_CXX' in tst.env:
+            check(['./test_serd_cxx'])
 
     def test_syntax_io(check, in_name, check_name, lang):
         in_path = 'test/good/%s' % in_name

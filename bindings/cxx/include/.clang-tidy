@@ -1,0 +1,13 @@
+Checks: >
+  *,
+  -*-non-private-member-variables-in-classes,
+  -clang-diagnostic-unused-macros,
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  -fuchsia-overloaded-operator,
+  -modernize-use-trailing-return-type,
+  -readability-else-after-return,
+  -readability-implicit-bool-conversion,
+  -readability-named-parameter,
+WarningsAsErrors: '*'
+HeaderFilterRegex: '.*'
+FormatStyle: file
