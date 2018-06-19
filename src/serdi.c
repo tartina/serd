@@ -84,14 +84,14 @@ quiet_error_sink(void* handle, const SerdError* e)
 	return SERD_SUCCESS;
 }
 
-static SerdStyle
+static SerdStyleFlags
 choose_style(const SerdSyntax input_syntax,
              const SerdSyntax output_syntax,
              const bool       ascii,
              const bool       bulk_write,
              const bool       full_uris)
 {
-	unsigned output_style = 0u;
+	SerdStyleFlags output_style = 0u;
 	if (output_syntax == SERD_NTRIPLES || ascii) {
 		output_style |= SERD_STYLE_ASCII;
 	} else if (output_syntax == SERD_TURTLE) {
@@ -111,7 +111,7 @@ choose_style(const SerdSyntax input_syntax,
 		output_style |= SERD_STYLE_BULK;
 	}
 
-	return (SerdStyle)output_style;
+	return output_style;
 }
 
 int
@@ -225,7 +225,7 @@ main(int argc, char** argv)
 		output_syntax = input_has_graphs ? SERD_NQUADS : SERD_NTRIPLES;
 	}
 
-	const SerdStyle output_style =
+	const SerdStyleFlags output_style =
 	    choose_style(input_syntax, output_syntax, ascii, bulk_write, full_uris);
 
 	SerdNode* base = NULL;

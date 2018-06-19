@@ -250,8 +250,11 @@ typedef enum {
 	SERD_STYLE_BULK        = 1u << 4u, ///< Write output in pages.
 } SerdStyle;
 
+/// Bitwise OR of SerdStyle values
+typedef uint32_t SerdStyleFlags;
+
 /**
-   Free memory allocated by Serd
+   Free memory allocated by Serd.
 
    This function exists because some systems require memory allocated by a
    library to be freed by code in the same library.  It is otherwise equivalent
@@ -1088,7 +1091,7 @@ SERD_API
 SerdWriter* SERD_ALLOCATED
 serd_writer_new(SerdWorld* SERD_NONNULL      world,
                 SerdSyntax                   syntax,
-                SerdStyle                    style,
+                SerdStyleFlags               style,
                 SerdEnv* SERD_NONNULL        env,
                 SerdWriteFunc SERD_NONNULL   ssink,
                 void* SERD_NULLABLE          stream);
