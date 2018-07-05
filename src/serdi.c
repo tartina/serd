@@ -84,36 +84,6 @@ quiet_error_sink(void* handle, const SerdError* e)
 	return SERD_SUCCESS;
 }
 
-static SerdStyleFlags
-choose_style(const SerdSyntax input_syntax,
-             const SerdSyntax output_syntax,
-             const bool       ascii,
-             const bool       bulk_write,
-             const bool       full_uris)
-{
-	SerdStyleFlags output_style = 0u;
-	if (output_syntax == SERD_NTRIPLES || ascii) {
-		output_style |= SERD_STYLE_ASCII;
-	} else if (output_syntax == SERD_TURTLE) {
-		output_style |= SERD_STYLE_ABBREVIATED;
-		if (!full_uris) {
-			output_style |= SERD_STYLE_CURIED;
-		}
-	}
-
-	if ((input_syntax == SERD_TURTLE || input_syntax == SERD_TRIG) ||
-	    (output_style & SERD_STYLE_CURIED)) {
-		// Base URI may change and/or we're abbreviating URIs, so must resolve
-		output_style |= SERD_STYLE_RESOLVED;
-	}
-
-	if (bulk_write) {
-		output_style |= SERD_STYLE_BULK;
-	}
-
-	return output_style;
-}
-
 int
 main(int argc, char** argv)
 {
@@ -226,7 +196,9 @@ main(int argc, char** argv)
 	}
 
 	const SerdStyleFlags output_style =
-	    choose_style(input_syntax, output_syntax, ascii, bulk_write, full_uris);
+	    ((ascii ? SERD_STYLE_ASCII : 0) |     //
+	     (bulk_write ? SERD_STYLE_BULK : 0) | //
+	     (full_uris ? (SERD_STYLE_UNQUALIFIED | SERD_STYLE_UNRESOLVED) : 0));
 
 	SerdNode* base = NULL;
 	if (a < argc) {  // Base URI given on command line
@@ -239,7 +211,7 @@ main(int argc, char** argv)
 	SerdWorld* const  world  = serd_world_new();
 	SerdEnv* const    env    = serd_env_new(base);
 
-	SerdWriter* writer = serd_writer_new(
+	SerdWriter* const writer = serd_writer_new(
 	    world, output_syntax, output_style, env, (SerdWriteFunc)fwrite, out_fd);
 
 	SerdReader* const reader = serd_reader_new(world,

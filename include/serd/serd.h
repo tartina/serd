@@ -243,11 +243,10 @@ typedef struct {
    does not support abbreviation and is always ASCII.
 */
 typedef enum {
-	SERD_STYLE_ABBREVIATED = 1u << 0u, ///< Abbreviate triples when possible.
-	SERD_STYLE_ASCII       = 1u << 1u, ///< Escape all non-ASCII characters.
-	SERD_STYLE_RESOLVED    = 1u << 2u, ///< Resolve URIs against base URI.
-	SERD_STYLE_CURIED      = 1u << 3u, ///< Shorten URIs into CURIEs.
-	SERD_STYLE_BULK        = 1u << 4u, ///< Write output in pages.
+	SERD_STYLE_ASCII       = 1u << 0u, ///< Escape all non-ASCII characters
+	SERD_STYLE_BULK        = 1u << 1u, ///< Write output in pages
+	SERD_STYLE_UNQUALIFIED = 1u << 2u, ///< Do not shorten URIs into CURIEs
+	SERD_STYLE_UNRESOLVED  = 1u << 3u  ///< Do not make URIs relative
 } SerdStyle;
 
 /// Bitwise OR of SerdStyle values

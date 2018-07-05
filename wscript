@@ -402,19 +402,41 @@ def earl_assertion(test, passed, asserter):
 serdi = './serdi_static'
 
 
-def test_thru(check, base, path, check_path, flags, isyntax, osyntax, opts=[]):
+def test_osyntax_options(osyntax):
+    if osyntax.lower() == 'ntriples' or osyntax.lower() == 'nquads':
+        return [['-a']]
+    return []
+
+
+def flatten_options(opts):
+    return [o for sublist in opts for o in sublist]
+
+
+def test_thru(check,
+              base,
+              path,
+              check_path,
+              flags,
+              isyntax,
+              osyntax,
+              options=[]):
     out_path = path + '.pass'
-    out_cmd = [serdi] + opts + [f for sublist in flags for f in sublist] + [
+    opts = options + flatten_options(test_osyntax_options(osyntax))
+    flags = flatten_options(flags)
+    osyntax_opts = [f for sublist in
+                    test_osyntax_options(osyntax) for f in sublist]
+    out_cmd = [serdi] + opts + flags + [
         '-i', isyntax,
         '-o', isyntax,
         '-p', 'foo',
         check.tst.src_path(path), base]
 
     thru_path = path + '.thru'
-    thru_cmd = [serdi] + opts + [
+    thru_cmd = [serdi] + opts + osyntax_opts + [
         '-i', isyntax,
         '-o', osyntax,
         '-c', 'foo',
+        '-a',
         out_path,
         base]
 
@@ -516,7 +538,7 @@ def test_suite(ctx, base_uri, testdir, report, isyntax, options=[]):
                 action      = os.path.join('test', testdir, basename)
                 rel_action  = os.path.join(os.path.relpath(srcdir), action)
                 uri         = base_uri + os.path.basename(action)
-                command     = [serdi] + options + ['-f', rel_action, uri]
+                command     = [serdi, '-a'] + options + [rel_action, uri]
 
                 # Run strict test
                 if expected_return == 0:
@@ -677,4 +699,4 @@ def test(tst):
         test_suite(tst, w3c_base + 'NQuadsTests/',
                    'NQuadsTests', report, 'NQuads')
         test_suite(tst, w3c_base + 'TriGTests/',
-                   'TriGTests', report, 'Trig', ['-a'])
+                   'TriGTests', report, 'Trig')
