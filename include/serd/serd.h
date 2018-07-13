@@ -247,9 +247,8 @@ typedef struct {
 */
 typedef enum {
 	SERD_STYLE_ASCII       = 1u << 0u, ///< Escape all non-ASCII characters
-	SERD_STYLE_BULK        = 1u << 1u, ///< Write output in pages
-	SERD_STYLE_UNQUALIFIED = 1u << 2u, ///< Do not shorten URIs into CURIEs
-	SERD_STYLE_UNRESOLVED  = 1u << 3u  ///< Do not make URIs relative
+	SERD_STYLE_UNQUALIFIED = 1u << 1u, ///< Do not shorten URIs into CURIEs
+	SERD_STYLE_UNRESOLVED  = 1u << 2u  ///< Do not make URIs relative
 } SerdStyle;
 
 /// Bitwise OR of SerdStyle values
@@ -1118,7 +1117,7 @@ serd_writer_new(SerdWorld* SERD_NONNULL      world,
                 SerdSyntax                   syntax,
                 SerdStyleFlags               style,
                 SerdEnv* SERD_NONNULL        env,
-                SerdWriteFunc SERD_NONNULL   ssink,
+                SerdWriteFunc SERD_NONNULL   write_func,
                 void* SERD_NULLABLE          stream);
 
 /// Free `writer`

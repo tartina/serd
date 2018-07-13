@@ -197,7 +197,6 @@ main(int argc, char** argv)
 
 	const SerdStyleFlags output_style =
 	    ((ascii ? SERD_STYLE_ASCII : 0) |     //
-	     (bulk_write ? SERD_STYLE_BULK : 0) | //
 	     (full_uris ? (SERD_STYLE_UNQUALIFIED | SERD_STYLE_UNRESOLVED) : 0));
 
 	SerdNode* base = NULL;
@@ -207,12 +206,21 @@ main(int argc, char** argv)
 		base = serd_new_file_uri(input, NULL);
 	}
 
-	FILE* const       out_fd = stdout;
-	SerdWorld* const  world  = serd_world_new();
-	SerdEnv* const    env    = serd_env_new(base);
+	FILE* const      out_fd = stdout;
+	SerdWorld* const world  = serd_world_new();
+	SerdEnv* const   env    = serd_env_new(base);
 
-	SerdWriter* const writer = serd_writer_new(
-	    world, output_syntax, output_style, env, (SerdWriteFunc)fwrite, out_fd);
+	SerdByteSink* const byte_sink = serd_byte_sink_new((SerdWriteFunc)fwrite,
+	                                                   out_fd,
+	                                                   bulk_write ? 4096 : 1);
+
+	SerdWriter* const writer =
+	    serd_writer_new(world,
+	                    output_syntax,
+	                    output_style,
+	                    env,
+	                    (SerdWriteFunc)serd_byte_sink_write,
+	                    byte_sink);
 
 	SerdReader* const reader = serd_reader_new(world,
 	                                           input_syntax,
@@ -253,9 +261,9 @@ main(int argc, char** argv)
 
 	serd_reader_finish(reader);
 	serd_reader_free(reader);
-	serd_writer_finish(writer);
 	serd_writer_free(writer);
 	serd_node_free(input_name);
+	serd_byte_sink_free(byte_sink);
 	serd_env_free(env);
 	serd_node_free(base);
 	serd_world_free(world);
