@@ -172,6 +172,7 @@ lib_source = ['src/base64.c',
               'src/env.c',
               'src/n3.c',
               'src/node.c',
+              'src/nodes.c',
               'src/reader.c',
               'src/sink.c',
               'src/statement.c',
@@ -180,7 +181,9 @@ lib_source = ['src/base64.c',
               'src/system.c',
               'src/uri.c',
               'src/world.c',
-              'src/writer.c']
+              'src/writer.c',
+              'src/zix/digest.c',
+              'src/zix/hash.c']
 
 
 def build(bld):
@@ -244,6 +247,7 @@ def build(bld):
                      ('test_env', 'test/test_env.c'),
                      ('test_free_null', 'test/test_free_null.c'),
                      ('test_node', 'test/test_node.c'),
+                     ('test_nodes', 'test/test_nodes.c'),
                      ('test_read_chunk', 'test/test_read_chunk.c'),
                      ('test_reader_writer', 'test/test_reader_writer.c'),
                      ('test_string', 'test/test_string.c'),
@@ -600,6 +604,7 @@ def test(tst):
         check(['./test_env'])
         check(['./test_free_null'])
         check(['./test_node'])
+        check(['./test_nodes'])
         check(['./test_read_chunk'])
         check(['./test_reader_writer'])
         check(['./test_string'])

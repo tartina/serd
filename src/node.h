@@ -39,9 +39,19 @@ serd_node_buffer_c(const SerdNode* node)
 	return (const char*)(node + 1);
 }
 
-SerdNode* serd_node_malloc(size_t n_bytes, SerdNodeFlags flags, SerdType type);
-void      serd_node_set(SerdNode** dst, const SerdNode* src);
-void      serd_node_zero_pad(SerdNode* node);
-SerdNode* serd_new_resolved_uri_i(const char* str, const SerdURI* base);
+SerdNode*
+serd_node_malloc(size_t n_bytes, SerdNodeFlags flags, SerdType type);
+
+void
+serd_node_set(SerdNode** dst, const SerdNode* src);
+
+SERD_PURE_FUNC size_t
+serd_node_total_size(const SerdNode* node);
+
+void
+serd_node_zero_pad(SerdNode* node);
+
+SerdNode*
+serd_new_resolved_uri_i(const char* str, const SerdURI* base);
 
 #endif  // SERD_NODE_H
