@@ -248,6 +248,7 @@ def build(bld):
                      ('test_free_null', 'test/test_free_null.c'),
                      ('test_node', 'test/test_node.c'),
                      ('test_nodes', 'test/test_nodes.c'),
+                     ('test_overflow', 'test/test_overflow.c'),
                      ('test_read_chunk', 'test/test_read_chunk.c'),
                      ('test_reader_writer', 'test/test_reader_writer.c'),
                      ('test_string', 'test/test_string.c'),
@@ -605,6 +606,7 @@ def test(tst):
         check(['./test_free_null'])
         check(['./test_node'])
         check(['./test_nodes'])
+        check(['./test_overflow'])
         check(['./test_read_chunk'])
         check(['./test_reader_writer'])
         check(['./test_string'])
