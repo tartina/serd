@@ -76,14 +76,6 @@ missing_arg(const char* name, char opt)
 	return print_usage(name, true);
 }
 
-static SerdStatus
-quiet_error_sink(void* handle, const SerdError* e)
-{
-	(void)handle;
-	(void)e;
-	return SERD_SUCCESS;
-}
-
 int
 main(int argc, char** argv)
 {
@@ -229,7 +221,7 @@ main(int argc, char** argv)
 
 	serd_reader_set_strict(reader, !lax);
 	if (quiet) {
-		serd_world_set_error_sink(world, quiet_error_sink, NULL);
+		serd_world_set_log_func(world, serd_quiet_error_func, NULL);
 	}
 
 	SerdNode* root = root_uri ? serd_new_uri(root_uri) : NULL;

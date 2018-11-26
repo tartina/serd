@@ -28,12 +28,6 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#if defined(__GNUC__)
-#    define SERD_LOG_FUNC(fmt, arg1) __attribute__((format(printf, fmt, arg1)))
-#else
-#    define SERD_LOG_FUNC(fmt, arg1)
-#endif
-
 #ifdef SERD_STACK_CHECK
 #    define SERD_STACK_ASSERT_TOP(reader, ref) \
             assert(ref == reader->allocs[reader->n_allocs - 1]);
@@ -52,7 +46,7 @@ typedef struct {
 struct SerdReaderImpl {
 	SerdWorld*        world;
 	const SerdSink*   sink;
-	SerdErrorSink     error_sink;
+	SerdLogFunc       log_func;
 	void*             error_handle;
 	SerdNode*         rdf_first;
 	SerdNode*         rdf_rest;

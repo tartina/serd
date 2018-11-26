@@ -103,7 +103,8 @@ def configure(conf):
         })
 
         if 'mingw' in conf.env.CC[0]:
-            conf.env.append_value('CFLAGS', '-Wno-unused-macros')
+            conf.env.append_value('CFLAGS', ['-Wno-unused-macros',
+                                             '-Wno-suggest-attribute=format'])
 
     conf.env.update({
         'BUILD_UTILS': not Options.options.no_utils,
