@@ -945,6 +945,12 @@ serd_env_foreach(const SerdEnv* SERD_NONNULL env,
                  SerdPrefixSink SERD_NONNULL func,
                  void* SERD_NULLABLE         handle);
 
+/// Write all prefixes in `env` to `sink`
+SERD_API
+void
+serd_env_write_prefixes(const SerdEnv* SERD_NONNULL  env,
+                        const SerdSink* SERD_NONNULL sink);
+
 /**
    @}
    @name Sink

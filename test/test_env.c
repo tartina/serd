@@ -83,9 +83,11 @@ test_env(void)
 	assert(!serd_env_expand(env, blank));
 	serd_node_free(blank);
 
-	int n_prefixes = 0;
+	size_t    n_prefixes          = 0;
+	SerdSink* count_prefixes_sink = serd_sink_new(&n_prefixes);
+	serd_sink_set_prefix_func(count_prefixes_sink, count_prefixes);
 	serd_env_set_prefix(env, pre, eg);
-	serd_env_foreach(env, count_prefixes, &n_prefixes);
+	serd_env_write_prefixes(env, count_prefixes_sink);
 	assert(n_prefixes == 1);
 
 	SerdNode* qualified = serd_env_qualify(env, foo_u);
