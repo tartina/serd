@@ -144,6 +144,22 @@ test_integer_to_node(void)
 }
 
 static void
+test_boolean(void)
+{
+	SerdNode* true_node = serd_new_boolean(true);
+	assert(!strcmp(serd_node_string(true_node), "true"));
+	assert(!strcmp(serd_node_string(serd_node_datatype(true_node)),
+	               NS_XSD "boolean"));
+	serd_node_free(true_node);
+
+	SerdNode* false_node = serd_new_boolean(false);
+	assert(!strcmp(serd_node_string(false_node), "false"));
+	assert(!strcmp(serd_node_string(serd_node_datatype(false_node)),
+	               NS_XSD "boolean"));
+	serd_node_free(false_node);
+}
+
+static void
 test_blob_to_node(void)
 {
 	for (size_t size = 1; size < 256; ++size) {
@@ -286,6 +302,7 @@ main(void)
 	test_double_to_node();
 	test_integer_to_node();
 	test_blob_to_node();
+	test_boolean();
 	test_node_equals();
 	test_node_from_string();
 	test_node_from_substring();

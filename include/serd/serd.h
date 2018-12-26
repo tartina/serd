@@ -753,6 +753,11 @@ SERD_API
 SerdNode* SERD_ALLOCATED
 serd_new_integer(int64_t i, const SerdNode* SERD_NULLABLE datatype);
 
+/// Create a new node by serialising `b` into an xsd:boolean string
+SERD_API
+SerdNode* SERD_ALLOCATED
+serd_new_boolean(bool b);
+
 /**
    Create a node by serialising `buf` into an xsd:base64Binary string
 
