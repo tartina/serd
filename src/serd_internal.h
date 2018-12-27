@@ -19,9 +19,7 @@
 
 #include "world.h"
 
-#include "serd/serd.h"
-
-#if defined(HAVE_POSIX_FADVISE) && defined(HAVE_FILENO)
+#if defined(HAVE_POSIX_MEMALIGN)
 #   include <fcntl.h>
 #endif
 
@@ -37,7 +35,5 @@
 #ifndef MIN
 #    define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #endif
-
-/* Error reporting */
 
 #endif  // SERD_INTERNAL_H
