@@ -132,15 +132,17 @@ serd_env_set_base_uri(SerdEnv*        env,
 	SerdNode* base_uri_node =
 	    serd_new_resolved_uri_i(serd_node_string(uri), &env->base_uri);
 
-	SerdURI base_uri;
-	serd_uri_parse(serd_node_string(base_uri_node), &base_uri);
+	if (base_uri_node) {
+		// Replace the current base URI
+		SerdURI   base_uri;
+		serd_uri_parse(serd_node_string(base_uri_node), &base_uri);
+		serd_node_free(env->base_uri_node);
+		env->base_uri_node = base_uri_node;
+		env->base_uri      = base_uri;
+		return SERD_SUCCESS;
+	}
 
-	// Replace the current base URI
-	serd_node_free(env->base_uri_node);
-	env->base_uri_node = base_uri_node;
-	env->base_uri      = base_uri;
-
-	return SERD_SUCCESS;
+	return SERD_ERR_BAD_ARG;
 }
 
 static inline SERD_PURE_FUNC SerdPrefix*
