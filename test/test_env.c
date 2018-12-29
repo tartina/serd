@@ -88,6 +88,7 @@ test_env(void)
 	serd_sink_set_prefix_func(count_prefixes_sink, count_prefixes);
 	serd_env_set_prefix(env, pre, eg);
 	serd_env_write_prefixes(env, count_prefixes_sink);
+	serd_sink_free(count_prefixes_sink);
 	assert(n_prefixes == 1);
 
 	SerdNode* qualified = serd_env_qualify(env, foo_u);
@@ -110,7 +111,6 @@ test_env(void)
 	serd_env_set_prefix_from_strings(env, "test2", "http://example.org/test");
 	assert(!serd_env_equals(env, env_copy));
 
-	serd_sink_free(count_prefixes_sink);
 	serd_node_free(qualified);
 	serd_node_free(foo_c);
 	serd_node_free(empty);

@@ -17,7 +17,7 @@
 #include "reader.h"
 
 #include "serd_internal.h"
-#include "sink.h"
+#include "stack.h"
 #include "statement.h"
 #include "system.h"
 #include "world.h"
@@ -124,11 +124,8 @@ emit_statement(SerdReader* reader, ReadContext ctx, SerdNode* o)
 		&reader->source.cur
 	};
 
-	const SerdStatus st = !reader->sink->statement
-	                          ? SERD_SUCCESS
-	                          : reader->sink->statement(reader->sink->handle,
-	                                                    *ctx.flags,
-	                                                    &statement);
+	const SerdStatus st =
+	    serd_sink_write_statement(reader->sink, *ctx.flags, &statement);
 
 	*ctx.flags = 0;
 	return st;
