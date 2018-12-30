@@ -22,23 +22,17 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
-typedef struct {
-	int n_statements;
-} ReaderTest;
-
 static SerdStatus
-test_sink(void*                handle,
-          SerdStatementFlags   flags,
-          const SerdStatement* statement)
+count_statements(void*                handle,
+                 SerdStatementFlags   flags,
+                 const SerdStatement* statement)
 {
 	(void)flags;
 	(void)statement;
 
-	ReaderTest* rt = (ReaderTest*)handle;
-	++rt->n_statements;
+	++*(size_t*)handle;
 	return SERD_SUCCESS;
 }
 
@@ -72,17 +66,18 @@ eof_test_error(void* stream)
 static void
 test_read_chunks(void)
 {
-	SerdWorld*        world  = serd_world_new();
-	ReaderTest* const rt     = (ReaderTest*)calloc(1, sizeof(ReaderTest));
-	FILE* const       f      = tmpfile();
-	static const char null   = 0;
-	SerdSink*         sink   = serd_sink_new(rt);
-	SerdReader*       reader = serd_reader_new(world, SERD_TURTLE, sink, 4096);
+	SerdWorld*        world        = serd_world_new();
+	size_t            n_statements = 0;
+	FILE* const       f            = tmpfile();
+	static const char null         = 0;
+	SerdSink*         sink         = serd_sink_new(&n_statements);
 
+	assert(sink);
+	serd_sink_set_statement_func(sink, count_statements);
+
+	SerdReader* reader = serd_reader_new(world, SERD_TURTLE, sink, 4096);
 	assert(reader);
 	assert(f);
-
-	serd_sink_set_statement_func(sink, test_sink);
 
 	SerdStatus st = serd_reader_start_stream(reader,
 	                                         (SerdReadFunc)fread,
@@ -103,37 +98,36 @@ test_read_chunks(void)
 	// Read prefix
 	st = serd_reader_read_chunk(reader);
 	assert(st == SERD_SUCCESS);
-	assert(rt->n_statements == 0);
+	assert(n_statements == 0);
 
 	// Read first statement
 	st = serd_reader_read_chunk(reader);
 	assert(st == SERD_SUCCESS);
-	assert(rt->n_statements == 1);
+	assert(n_statements == 1);
 
 	// Read terminator
 	st = serd_reader_read_chunk(reader);
 	assert(st == SERD_FAILURE);
-	assert(rt->n_statements == 1);
+	assert(n_statements == 1);
 
 	// Read second statement (after null terminator)
 	st = serd_reader_read_chunk(reader);
 	assert(st == SERD_SUCCESS);
-	assert(rt->n_statements == 2);
+	assert(n_statements == 2);
 
 	// Read terminator
 	st = serd_reader_read_chunk(reader);
 	assert(st == SERD_FAILURE);
-	assert(rt->n_statements == 2);
+	assert(n_statements == 2);
 
 	// EOF
 	st = serd_reader_read_chunk(reader);
 	assert(st == SERD_FAILURE);
-	assert(rt->n_statements == 2);
+	assert(n_statements == 2);
 
 	serd_reader_free(reader);
 	serd_sink_free(sink);
 	fclose(f);
-	free(rt);
 	serd_world_free(world);
 }
 
@@ -157,13 +151,13 @@ test_get_blank(void)
 static void
 test_read_string(void)
 {
-	SerdWorld*        world  = serd_world_new();
-	ReaderTest* const rt     = (ReaderTest*)calloc(1, sizeof(ReaderTest));
-	SerdSink*         sink   = serd_sink_new(rt);
-	SerdReader*       reader = serd_reader_new(world, SERD_TURTLE, sink, 4096);
+	SerdWorld*  world        = serd_world_new();
+	size_t      n_statements = 0;
+	SerdSink*   sink         = serd_sink_new(&n_statements);
+	SerdReader* reader       = serd_reader_new(world, SERD_TURTLE, sink, 4096);
 	assert(reader);
 
-	serd_sink_set_statement_func(sink, test_sink);
+	serd_sink_set_statement_func(sink, count_statements);
 
 	// Test reading a string that ends exactly at the end of input (no newline)
 	assert(!serd_reader_start_string(
@@ -173,12 +167,11 @@ test_read_string(void)
 		       NULL));
 
 	assert(!serd_reader_read_document(reader));
-	assert(rt->n_statements == 1);
+	assert(n_statements == 1);
 	assert(!serd_reader_finish(reader));
 
 	serd_reader_free(reader);
 	serd_sink_free(sink);
-	free(rt);
 	serd_world_free(world);
 }
 
@@ -299,9 +292,9 @@ test_reader(const char* path)
 {
 	SerdWorld*  world  = serd_world_new();
 
-	ReaderTest rt   = { 0 };
-	SerdSink*  sink = serd_sink_new(&rt);
-	serd_sink_set_statement_func(sink, test_sink);
+	size_t    n_statements = 0;
+	SerdSink* sink         = serd_sink_new(&n_statements);
+	serd_sink_set_statement_func(sink, count_statements);
 
 	SerdReader* reader = serd_reader_new(world, SERD_TURTLE, sink, 4096);
 	assert(reader);
@@ -323,7 +316,7 @@ test_reader(const char* path)
 
 	assert(!serd_reader_start_file(reader, path, true));
 	assert(!serd_reader_read_document(reader));
-	assert(rt.n_statements == 13);
+	assert(n_statements == 13);
 	serd_reader_finish(reader);
 
 	// A read of a big page hits EOF then fails to read chunks immediately
