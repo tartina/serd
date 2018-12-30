@@ -489,8 +489,8 @@ is_inline_start(const SerdWriter*  writer,
                 SerdStatementFlags flags)
 {
 	return (supports_abbrev(writer) &&
-	        ((field == SERD_SUBJECT && (flags & SERD_ANON_S_BEGIN)) ||
-	         (field == SERD_OBJECT &&  (flags & SERD_ANON_O_BEGIN))));
+	        ((field == SERD_SUBJECT && (flags & SERD_ANON_S)) ||
+	         (field == SERD_OBJECT &&  (flags & SERD_ANON_O))));
 }
 
 static bool
@@ -675,8 +675,8 @@ write_blank(SerdWriter* const        writer,
 	if (supports_abbrev(writer)) {
 		if (is_inline_start(writer, field, flags)) {
 			return write_sep(writer, SEP_ANON_BEGIN);
-		} else if ((field == SERD_SUBJECT && (flags & SERD_LIST_S_BEGIN)) ||
-		           (field == SERD_OBJECT && (flags & SERD_LIST_O_BEGIN))) {
+		} else if ((field == SERD_SUBJECT && (flags & SERD_LIST_S)) ||
+		           (field == SERD_OBJECT && (flags & SERD_LIST_O))) {
 			return write_sep(writer, SEP_LIST_BEGIN);
 		} else if (field == SERD_SUBJECT && (flags & SERD_EMPTY_S)) {
 			writer->last_sep = SEP_NONE; // Treat "[]" like anode
@@ -757,10 +757,8 @@ serd_writer_write_statement(SerdWriter*          writer,
                             SerdStatementFlags   flags,
                             const SerdStatement* statement)
 {
-	assert(!((flags & SERD_EMPTY_S) && (flags & SERD_ANON_S_BEGIN)));
-	assert(!((flags & SERD_EMPTY_S) && (flags & SERD_LIST_S_BEGIN)));
-	assert(!((flags & SERD_ANON_S_BEGIN) && (flags & SERD_LIST_S_BEGIN)));
-	assert(!((flags & SERD_ANON_O_BEGIN) && (flags & SERD_LIST_O_BEGIN)));
+	assert(!((flags & SERD_ANON_S) && (flags & SERD_LIST_S)));
+	assert(!((flags & SERD_ANON_O) && (flags & SERD_LIST_O)));
 
 	SerdStatus            st        = SERD_SUCCESS;
 	const SerdNode* const subject   = serd_statement_subject(statement);
@@ -823,7 +821,7 @@ serd_writer_write_statement(SerdWriter*          writer,
 		if (serd_node_equals(predicate, writer->context.predicate)) {
 			// Abbreviate S P
 			if (!writer->context.indented_object &&
-			    !(flags & (SERD_ANON_O_BEGIN | SERD_LIST_O_BEGIN))) {
+			    !(flags & (SERD_ANON_O | SERD_LIST_O))) {
 				++writer->indent;
 				writer->context.indented_object = true;
 			}
@@ -860,9 +858,9 @@ serd_writer_write_statement(SerdWriter*          writer,
 
 		if (serd_stack_is_empty(&writer->anon_stack)) {
 			write_node(writer, subject, SERD_SUBJECT, flags);
-			if (!(flags & (SERD_ANON_S_BEGIN | SERD_LIST_S_BEGIN))) {
+			if (!(flags & (SERD_ANON_S | SERD_LIST_S))) {
 				write_sep(writer, SEP_S_P);
-			} else if (flags & SERD_ANON_S_BEGIN) {
+			} else if (flags & SERD_ANON_S) {
 				write_sep(writer, SEP_ANON_S_P);
 			}
 		} else {
@@ -872,14 +870,14 @@ serd_writer_write_statement(SerdWriter*          writer,
 		reset_context(writer, false);
 		serd_node_set(&writer->context.subject, subject);
 
-		if (!(flags & SERD_LIST_S_BEGIN)) {
+		if (!(flags & SERD_LIST_S)) {
 			write_pred(writer, flags, predicate);
 		}
 
 		write_node(writer, object, SERD_OBJECT, flags);
 	}
 
-	if (flags & SERD_LIST_S_BEGIN) {
+	if (flags & SERD_LIST_S) {
 		const WriteContext ctx = {CTX_LIST,
 		                          serd_node_copy(graph),
 		                          serd_node_copy(subject),
@@ -888,7 +886,7 @@ serd_writer_write_statement(SerdWriter*          writer,
 		if ((st = push_context(writer, ctx))) {
 			return st;
 		}
-	} if (flags & SERD_LIST_O_BEGIN) {
+	} if (flags & SERD_LIST_O) {
 		const WriteContext ctx = {CTX_LIST,
 		                          serd_node_copy(graph),
 		                          serd_node_copy(object),
@@ -899,9 +897,9 @@ serd_writer_write_statement(SerdWriter*          writer,
 		}
 	}
 
-	if (flags & (SERD_ANON_S_BEGIN | SERD_ANON_O_BEGIN)) {
-		const bool is_list    = flags & (SERD_LIST_S_BEGIN | SERD_LIST_O_BEGIN);
-		const bool is_subject = flags & SERD_ANON_S_BEGIN;
+	if (flags & (SERD_ANON_S | SERD_ANON_O)) {
+		const bool is_list    = flags & (SERD_LIST_S | SERD_LIST_O);
+		const bool is_subject = flags & SERD_ANON_S;
 
 		const WriteContext ctx = {is_list ? CTX_LIST : CTX_BLANK,
 		                          serd_node_copy(graph),
