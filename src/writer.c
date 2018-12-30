@@ -104,24 +104,24 @@ static const SepRule rules[] = {
 };
 
 struct SerdWriterImpl {
-	SerdWorld*     world;
-	SerdSink       iface;
-	SerdSyntax     syntax;
-	SerdStyleFlags style;
-	SerdEnv*       env;
-	SerdNode*      root_node;
-	SerdURI        root_uri;
-	SerdStack      anon_stack;
-	SerdWriteFunc  write_func;
-	void*          stream;
-	SerdErrorSink  error_sink;
-	void*          error_handle;
-	WriteContext   context;
-	int            indent;
-	char*          bprefix;
-	size_t         bprefix_len;
-	Sep            last_sep;
-	bool           empty;
+	SerdWorld*      world;
+	SerdSink        iface;
+	SerdSyntax      syntax;
+	SerdWriterFlags flags;
+	SerdEnv*        env;
+	SerdNode*       root_node;
+	SerdURI         root_uri;
+	SerdStack       anon_stack;
+	SerdWriteFunc   write_func;
+	void*           stream;
+	SerdErrorSink   error_sink;
+	void*           error_handle;
+	WriteContext    context;
+	int             indent;
+	char*           bprefix;
+	size_t          bprefix_len;
+	Sep             last_sep;
+	bool            empty;
 };
 
 typedef enum {
@@ -233,7 +233,7 @@ write_character(SerdWriter* writer, const uint8_t* utf8, size_t* size)
 		break;
 	}
 
-	if (!(writer->style & SERD_STYLE_ASCII)) {
+	if (!(writer->flags & SERD_STYLE_ASCII)) {
 		// Write UTF-8 character directly to UTF-8 output
 		return sink(utf8, *size, writer);
 	}
@@ -575,7 +575,7 @@ write_uri_node(SerdWriter* const        writer,
 			return sink("a", 1, writer) == 1;
 		} else if (serd_node_equals(node, writer->world->rdf_type)) {
 			return sink("()", 2, writer) == 2;
-		} else if (has_scheme && !(writer->style & SERD_STYLE_UNQUALIFIED) &&
+		} else if (has_scheme && !(writer->flags & SERD_STYLE_UNQUALIFIED) &&
 		           serd_env_qualify_in_place(
 		               writer->env, node, &prefix, &suffix) &&
 		           is_name(serd_node_string(prefix),
@@ -598,7 +598,7 @@ write_uri_node(SerdWriter* const        writer,
 	}
 
 	sink("<", 1, writer);
-	if (!(writer->style & SERD_STYLE_UNRESOLVED) &&
+	if (!(writer->flags & SERD_STYLE_UNRESOLVED) &&
 	    serd_env_base_uri(writer->env)) {
 		const SerdURI* base_uri = serd_env_get_parsed_base_uri(writer->env);
 		SerdURI uri;
@@ -957,18 +957,18 @@ serd_writer_finish(SerdWriter* writer)
 }
 
 SerdWriter*
-serd_writer_new(SerdWorld*     world,
-                SerdSyntax     syntax,
-                SerdStyleFlags style,
-                SerdEnv*       env,
-                SerdWriteFunc  write_func,
-                void*          stream)
+serd_writer_new(SerdWorld*      world,
+                SerdSyntax      syntax,
+                SerdWriterFlags flags,
+                SerdEnv*        env,
+                SerdWriteFunc   write_func,
+                void*           stream)
 {
 	const WriteContext context = WRITE_CONTEXT_NULL;
 	SerdWriter*        writer  = (SerdWriter*)calloc(1, sizeof(SerdWriter));
 	writer->world        = world;
 	writer->syntax       = syntax;
-	writer->style        = style;
+	writer->flags        = flags;
 	writer->env          = env;
 	writer->root_node    = NULL;
 	writer->root_uri     = SERD_URI_NULL;

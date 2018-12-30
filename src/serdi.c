@@ -195,7 +195,7 @@ main(int argc, char** argv)
 		output_syntax = input_has_graphs ? SERD_NQUADS : SERD_NTRIPLES;
 	}
 
-	const SerdStyleFlags output_style =
+	const SerdWriterFlags writer_flags =
 	    ((ascii ? SERD_STYLE_ASCII : 0) |     //
 	     (full_uris ? (SERD_STYLE_UNQUALIFIED | SERD_STYLE_UNRESOLVED) : 0));
 
@@ -217,7 +217,7 @@ main(int argc, char** argv)
 	SerdWriter* const writer =
 	    serd_writer_new(world,
 	                    output_syntax,
-	                    output_style,
+	                    writer_flags,
 	                    env,
 	                    (SerdWriteFunc)serd_byte_sink_write,
 	                    byte_sink);

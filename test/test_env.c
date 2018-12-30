@@ -110,6 +110,7 @@ test_env(void)
 	serd_env_set_prefix_from_strings(env, "test2", "http://example.org/test");
 	assert(!serd_env_equals(env, env_copy));
 
+	serd_sink_free(count_prefixes_sink);
 	serd_node_free(qualified);
 	serd_node_free(foo_c);
 	serd_node_free(empty);

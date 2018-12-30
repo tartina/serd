@@ -239,7 +239,7 @@ typedef struct {
 } SerdURI;
 
 /**
-   Syntax style options.
+   Writer style options.
 
    These flags allow more precise control of writer output style.  Note that
    some options are only supported for some syntaxes, for example, NTriples
@@ -249,10 +249,10 @@ typedef enum {
 	SERD_STYLE_ASCII       = 1u << 0u, ///< Escape all non-ASCII characters
 	SERD_STYLE_UNQUALIFIED = 1u << 1u, ///< Do not shorten URIs into CURIEs
 	SERD_STYLE_UNRESOLVED  = 1u << 2u  ///< Do not make URIs relative
-} SerdStyle;
+} SerdWriterFlag;
 
-/// Bitwise OR of SerdStyle values
-typedef uint32_t SerdStyleFlags;
+/// Bitwise OR of SerdWriterFlag values
+typedef uint32_t SerdWriterFlags;
 
 /**
    Free memory allocated by Serd.
@@ -1198,12 +1198,12 @@ serd_reader_free(SerdReader* SERD_NULLABLE reader);
 /// Create a new RDF writer
 SERD_API
 SerdWriter* SERD_ALLOCATED
-serd_writer_new(SerdWorld* SERD_NONNULL      world,
-                SerdSyntax                   syntax,
-                SerdStyleFlags               style,
-                SerdEnv* SERD_NONNULL        env,
-                SerdWriteFunc SERD_NONNULL   write_func,
-                void* SERD_NULLABLE          stream);
+serd_writer_new(SerdWorld* SERD_NONNULL    world,
+                SerdSyntax                 syntax,
+                SerdWriterFlags            flags,
+                SerdEnv* SERD_NONNULL      env,
+                SerdWriteFunc SERD_NONNULL write_func,
+                void* SERD_NULLABLE        stream);
 
 /// Free `writer`
 SERD_API
