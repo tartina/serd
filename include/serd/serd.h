@@ -178,7 +178,7 @@ typedef enum {
 	   Turtle](http://www.w3.org/TR/turtle/#grammar-production-BLANK_NODE_LABEL)
 	*/
 	SERD_BLANK = 4
-} SerdType;
+} SerdNodeType;
 
 /// Flags indicating certain string properties relevant to serialisation
 typedef enum {
@@ -563,7 +563,9 @@ serd_uri_serialise_relative(const SerdURI* SERD_NONNULL  uri,
 */
 SERD_API
 SerdNode* SERD_ALLOCATED
-serd_new_simple_node(SerdType type, const char* SERD_NONNULL str, size_t len);
+serd_new_simple_node(SerdNodeType             type,
+                     const char* SERD_NONNULL str,
+                     size_t                   len);
 
 /// Create a new plain literal string node from `str`
 SERD_API
@@ -748,7 +750,7 @@ serd_node_free(SerdNode* SERD_NULLABLE node);
 
 /// Return the type of a node (SERD_URI, SERD_BLANK, or SERD_LITERAL)
 SERD_PURE_API
-SerdType
+SerdNodeType
 serd_node_type(const SerdNode* SERD_NONNULL node);
 
 /// Return the string value of a node
