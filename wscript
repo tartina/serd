@@ -58,8 +58,6 @@ def configure(conf):
         autowaf.add_compiler_flags(conf.env, '*', {
             'clang': [
                 '-Wno-cast-align',
-                '-Wno-cast-qual',
-                '-Wno-conversion',
                 '-Wno-covered-switch-default',
                 '-Wno-disabled-macro-expansion',
                 '-Wno-double-promotion',
@@ -69,20 +67,15 @@ def configure(conf):
                 '-Wno-nullable-to-nonnull-conversion',
                 '-Wno-padded',
                 '-Wno-reserved-id-macro',
-                '-Wno-sign-conversion',
             ],
             'gcc': [
                 '-Wno-cast-align',
-                '-Wno-cast-qual',
-                '-Wno-float-conversion',
                 '-Wno-inline',
                 '-Wno-padded',
-                '-Wno-sign-conversion',
             ],
             'msvc': [
                 '/wd4061',  # enumerator in switch is not explicitly handled
                 '/wd4200',  # nonstandard: zero-sized array in struct/union
-                '/wd4365',  # signed/unsigned mismatch
                 '/wd4514',  # unreferenced inline function has been removed
                 '/wd4710',  # function not inlined
                 '/wd4711',  # function selected for automatic inline expansion
@@ -105,8 +98,11 @@ def configure(conf):
         })
 
         if 'mingw' in conf.env.CC[0]:
-            conf.env.append_value('CFLAGS', ['-Wno-unused-macros',
-                                             '-Wno-suggest-attribute=format'])
+            conf.env.append_value('CFLAGS', [
+                '-Wno-float-conversion',
+                '-Wno-suggest-attribute=format',
+                '-Wno-unused-macros',
+            ])
 
     conf.env.update({
         'BUILD_UTILS': not Options.options.no_utils,

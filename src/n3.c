@@ -58,7 +58,7 @@ read_HEX(SerdReader* reader)
 }
 
 // Read UCHAR escape, initial \ is already eaten by caller
-static inline SerdStatus
+static SerdStatus
 read_UCHAR(SerdReader* reader, SerdNode* dest, uint32_t* char_code)
 {
 	const int b      = peek_byte(reader);
@@ -134,7 +134,7 @@ read_UCHAR(SerdReader* reader, SerdNode* dest, uint32_t* char_code)
 }
 
 // Read ECHAR escape, initial \ is already eaten by caller
-static inline SerdStatus
+static SerdStatus
 read_ECHAR(SerdReader* reader, SerdNode* dest)
 {
 	const int c = peek_byte(reader);
@@ -266,7 +266,7 @@ read_comment(SerdReader* reader)
 }
 
 // [24] ws ::= #x9 | #xA | #xD | #x20 | comment
-static inline bool
+static bool
 read_ws(SerdReader* reader)
 {
 	const int c = peek_byte(reader);
@@ -290,14 +290,14 @@ read_ws_star(SerdReader* reader)
 }
 
 static inline bool
-peek_delim(SerdReader* reader, const char delim)
+peek_delim(SerdReader* reader, const uint8_t delim)
 {
 	read_ws_star(reader);
 	return peek_byte(reader) == delim;
 }
 
 static inline bool
-eat_delim(SerdReader* reader, const char delim)
+eat_delim(SerdReader* reader, const uint8_t delim)
 {
 	if (peek_delim(reader, delim)) {
 		eat_byte_safe(reader, delim);

@@ -236,9 +236,9 @@ test_writer(const char* const path)
 	}
 
 	// Write statements with bad UTF-8 (should be replaced)
-	const char bad_str[] = { (char)0xFF, (char)0x90, 'h', 'i', 0 };
-	SerdNode*  bad_lit   = serd_new_string(bad_str);
-	SerdNode*  bad_uri   = serd_new_uri(bad_str);
+	const uint8_t bad_str[] = { 0xFF, 0x90, 'h', 'i', 0 };
+	SerdNode* bad_lit       = serd_new_string((const char*)bad_str);
+	SerdNode* bad_uri       = serd_new_uri((const char*)bad_str);
 	assert(!serd_sink_write(iface, 0, s, p, bad_lit, 0));
 	assert(!serd_sink_write(iface, 0, s, p, bad_uri, 0));
 	serd_node_free(bad_uri);

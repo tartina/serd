@@ -117,16 +117,16 @@ serd_strtod(const char* str, size_t* end)
 {
 	double result = 0.0;
 
-#define SET_END(index) do { if (end) { *end = index; } } while (0)
+#define SET_END(index) do { if (end) { *end = (size_t)(index); } } while (0)
 
 	if (!strcmp(str, "NaN")) {
-		SET_END(3);
+		SET_END(3u);
 		return NAN;
 	} else if (!strcmp(str, "-INF")) {
-		SET_END(4);
+		SET_END(4u);
 		return -INFINITY;
 	} else if (!strcmp(str, "INF")) {
-		SET_END(3);
+		SET_END(3u);
 		return INFINITY;
 	}
 

@@ -196,8 +196,8 @@ main(int argc, char** argv)
 	}
 
 	const SerdWriterFlags writer_flags =
-	    ((ascii ? SERD_STYLE_ASCII : 0) |     //
-	     (full_uris ? (SERD_STYLE_UNQUALIFIED | SERD_STYLE_UNRESOLVED) : 0));
+	    ((ascii ? SERD_STYLE_ASCII : 0u) | //
+	     (full_uris ? (SERD_STYLE_UNQUALIFIED | SERD_STYLE_UNRESOLVED) : 0u));
 
 	SerdNode* base = NULL;
 	if (a < argc) {  // Base URI given on command line
@@ -211,11 +211,11 @@ main(int argc, char** argv)
 	SerdEnv* const   env    = serd_env_new(base);
 
 	const SerdSerialisationFlags serialisation_flags =
-	    no_inline ? SERD_NO_INLINE_OBJECTS : 0;
+	    no_inline ? SERD_NO_INLINE_OBJECTS : 0u;
 
 	SerdByteSink* const byte_sink = serd_byte_sink_new((SerdWriteFunc)fwrite,
 	                                                   out_fd,
-	                                                   bulk_write ? 4096 : 1);
+	                                                   bulk_write ? 4096u : 1u);
 
 	SerdWriter* const writer =
 	    serd_writer_new(world,
@@ -230,8 +230,8 @@ main(int argc, char** argv)
 	const SerdSink* sink     = NULL;
 	if (use_model) {
 		const SerdModelFlags flags =
-		    SERD_INDEX_SPO | (input_has_graphs ? SERD_INDEX_GRAPHS : 0) |
-		    (no_inline ? 0 : SERD_INDEX_OPS);
+		    SERD_INDEX_SPO | (input_has_graphs ? SERD_INDEX_GRAPHS : 0u) |
+		    (no_inline ? 0u : SERD_INDEX_OPS);
 		model    = serd_model_new(world, flags);
 		inserter = serd_inserter_new(model, env, NULL);
 		sink     = inserter;

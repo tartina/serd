@@ -606,7 +606,7 @@ static int
 test_triple_index_read(SerdWorld* world, const unsigned n_quads)
 {
 	for (unsigned i = 0; i < 6; ++i) {
-		SerdModel* model = serd_model_new(world, (1 << i));
+		SerdModel* model = serd_model_new(world, (1u << i));
 		generate(world, model, n_quads, 0);
 		assert(!test_read(world, model, 0, n_quads));
 		serd_model_free(model);
@@ -619,7 +619,7 @@ static int
 test_quad_index_read(SerdWorld* world, const unsigned n_quads)
 {
 	for (unsigned i = 0; i < 6; ++i) {
-		SerdModel* model = serd_model_new(world, (1 << i) | SERD_INDEX_GRAPHS);
+		SerdModel* model = serd_model_new(world, (1u << i) | SERD_INDEX_GRAPHS);
 		const SerdNode* graph = uri(world, 42);
 		generate(world, model, n_quads, graph);
 		assert(!test_read(world, model, graph, n_quads));
