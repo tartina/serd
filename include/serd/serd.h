@@ -805,36 +805,36 @@ serd_node_compare(const SerdNode* SERD_NULLABLE a,
 
    Called whenever the base URI of the serialisation changes.
 */
-typedef SerdStatus (*SerdBaseSink)(void* SERD_NULLABLE          handle,
+typedef SerdStatus (*SerdBaseFunc)(void* SERD_NULLABLE          handle,
                                    const SerdNode* SERD_NONNULL uri);
 
 /**
-   Sink (callback) for namespace definitions
+   Sink function for namespace definitions
 
    Called whenever a prefix is defined in the serialisation.
 */
-typedef SerdStatus (*SerdPrefixSink)(void* SERD_NULLABLE          handle,
+typedef SerdStatus (*SerdPrefixFunc)(void* SERD_NULLABLE          handle,
                                      const SerdNode* SERD_NONNULL name,
                                      const SerdNode* SERD_NONNULL uri);
 
 /**
-   Sink (callback) for statements
+   Sink function for statements
 
    Called for every RDF statement in the serialisation.
 */
-typedef SerdStatus (*SerdStatementSink)(
+typedef SerdStatus (*SerdStatementFunc)(
 	void* SERD_NULLABLE               handle,
 	SerdStatementFlags                flags,
 	const SerdStatement* SERD_NONNULL statement);
 
 /**
-   Sink (callback) for anonymous node end markers
+   Sink function for anonymous node end markers
 
    This is called to indicate that the anonymous node with the given
    `value` will no longer be referred to by any future statements
    (i.e. the anonymous serialisation of the node is finished).
 */
-typedef SerdStatus (*SerdEndSink)(void* SERD_NULLABLE          handle,
+typedef SerdStatus (*SerdEndFunc)(void* SERD_NULLABLE          handle,
                                   const SerdNode* SERD_NONNULL node);
 
 /**
@@ -1074,7 +1074,7 @@ serd_env_expand(const SerdEnv* SERD_NONNULL  env,
 SERD_API
 void
 serd_env_foreach(const SerdEnv* SERD_NONNULL env,
-                 SerdPrefixSink SERD_NONNULL func,
+                 SerdPrefixFunc SERD_NONNULL func,
                  void* SERD_NULLABLE         handle);
 
 /// Write all prefixes in `env` to `sink`
@@ -1110,25 +1110,25 @@ serd_sink_free(SerdSink* SERD_NULLABLE sink);
 SERD_API
 SerdStatus
 serd_sink_set_base_func(SerdSink* SERD_NONNULL     sink,
-                        SerdBaseSink SERD_NULLABLE base_func);
+                        SerdBaseFunc SERD_NULLABLE base_func);
 
 /// Set a function to be called when a namespace prefix is defined
 SERD_API
 SerdStatus
 serd_sink_set_prefix_func(SerdSink* SERD_NONNULL       sink,
-                          SerdPrefixSink SERD_NULLABLE prefix_func);
+                          SerdPrefixFunc SERD_NULLABLE prefix_func);
 
 /// Set a function to be called when a statement is emitted
 SERD_API
 SerdStatus
 serd_sink_set_statement_func(SerdSink* SERD_NONNULL          sink,
-                             SerdStatementSink SERD_NULLABLE statement_func);
+                             SerdStatementFunc SERD_NULLABLE statement_func);
 
 /// Set a function to be called when an anonymous node ends
 SERD_API
 SerdStatus
 serd_sink_set_end_func(SerdSink* SERD_NONNULL    sink,
-                       SerdEndSink SERD_NULLABLE end_func);
+                       SerdEndFunc SERD_NULLABLE end_func);
 
 /// Set the base URI
 SERD_API

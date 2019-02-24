@@ -24,10 +24,10 @@
 */
 struct SerdSinkImpl {
 	void*             handle;
-	SerdBaseSink      base;
-	SerdPrefixSink    prefix;
-	SerdStatementSink statement;
-	SerdEndSink       end;
+	SerdBaseFunc      base;
+	SerdPrefixFunc    prefix;
+	SerdStatementFunc statement;
+	SerdEndFunc       end;
 };
 
 #endif  // SERD_SINK_H
