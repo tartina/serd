@@ -161,8 +161,12 @@ free_context(SerdWriter* writer)
 	return SERD_SUCCESS;
 }
 
-static inline SerdStatus
-push_context(SerdWriter* writer, const WriteContext new_context)
+static SerdStatus
+push_context(SerdWriter* const     writer,
+             const ContextType     type,
+             const SerdNode* const g,
+             const SerdNode* const s,
+             const SerdNode* const p)
 {
 	WriteContext* top = (WriteContext*)serd_stack_push(&writer->anon_stack,
 	                                                   sizeof(WriteContext));
@@ -172,6 +176,10 @@ push_context(SerdWriter* writer, const WriteContext new_context)
 	}
 
 	*top = writer->context;
+
+	const WriteContext new_context = {
+	    type, serd_node_copy(g), serd_node_copy(s), serd_node_copy(p), false};
+
 	writer->context = new_context;
 	return SERD_SUCCESS;
 }
@@ -888,21 +896,11 @@ serd_writer_write_statement(SerdWriter*          writer,
 	}
 
 	if (flags & SERD_LIST_S) {
-		const WriteContext ctx = {CTX_LIST,
-		                          serd_node_copy(graph),
-		                          serd_node_copy(subject),
-		                          NULL,
-		                          false};
-		if ((st = push_context(writer, ctx))) {
+		if ((st = push_context(writer, CTX_LIST, graph, subject, NULL))) {
 			return st;
 		}
 	} if (flags & SERD_LIST_O) {
-		const WriteContext ctx = {CTX_LIST,
-		                          serd_node_copy(graph),
-		                          serd_node_copy(object),
-		                          NULL,
-		                          false};
-		if ((st = push_context(writer, ctx))) {
+		if ((st = push_context(writer, CTX_LIST, graph, object, NULL))) {
 			return st;
 		}
 	}
@@ -911,13 +909,11 @@ serd_writer_write_statement(SerdWriter*          writer,
 		const bool is_list    = flags & (SERD_LIST_S | SERD_LIST_O);
 		const bool is_subject = flags & SERD_ANON_S;
 
-		const WriteContext ctx = {is_list ? CTX_LIST : CTX_BLANK,
-		                          serd_node_copy(graph),
-		                          serd_node_copy(subject),
-		                          is_subject ? serd_node_copy(predicate) : NULL,
-		                          false};
-
-		if ((st = push_context(writer, ctx))) {
+		if ((st = push_context(writer,
+		                       is_list ? CTX_LIST : CTX_BLANK,
+		                       graph,
+		                       subject,
+		                       is_subject ? predicate : NULL))) {
 			return st;
 		}
 	} else {
