@@ -282,6 +282,7 @@ def build(bld):
                      ('test_sink', 'test/test_sink.c'),
                      ('test_statement', 'test/test_statement.c'),
                      ('test_string', 'test/test_string.c'),
+                     ('test_terse_write', 'test/test_terse_write.c'),
                      ('test_uri', 'test/test_uri.c')]:
             bld(features     = 'c cprogram',
                 source       = prog[1],
@@ -572,7 +573,13 @@ def _file_lines_equal(patha, pathb, subst_from='', subst_to=''):
     return True
 
 
-def test_suite(ctx, base_uri, testdir, report, isyntax, options=[]):
+def test_suite(ctx,
+               base_uri,
+               testdir,
+               report,
+               isyntax,
+               options=[],
+               output_syntax=None):
     srcdir = ctx.path.abspath()
 
     mf = 'http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#'
@@ -585,7 +592,7 @@ def test_suite(ctx, base_uri, testdir, report, isyntax, options=[]):
 
     def run_tests(test_class, tests, expected_return):
         thru_flags = [['-e'], ['-f'], ['-b'], ['-r', 'http://example.org/']]
-        osyntax = _test_output_syntax(test_class)
+        osyntax = output_syntax or _test_output_syntax(test_class)
         thru_options_iter = _option_combinations(thru_flags)
         tests_name = '%s.%s' % (testdir, test_class[test_class.find('#') + 1:])
         with ctx.group(tests_name) as check:
@@ -595,7 +602,9 @@ def test_suite(ctx, base_uri, testdir, report, isyntax, options=[]):
                 action      = os.path.join('test', testdir, basename)
                 rel_action  = os.path.join(os.path.relpath(srcdir), action)
                 uri         = base_uri + os.path.basename(action)
-                command     = [serdi, '-a'] + options + [rel_action, uri]
+                command     = ([serdi, '-a', '-o', osyntax] +
+                               options +
+                               [rel_action, uri])
 
                 # Run strict test
                 if expected_return == 0:
@@ -649,7 +658,7 @@ def test(tst):
     import tempfile
 
     # Create test output directories
-    for i in ['bad', 'good', 'lax',
+    for i in ['bad', 'good', 'lax', 'terse',
               'TurtleTests', 'NTriplesTests', 'NQuadsTests', 'TriGTests']:
         try:
             test_dir = os.path.join('test', i)
@@ -675,6 +684,7 @@ def test(tst):
         check(['./test_sink'])
         check(['./test_statement'])
         check(['./test_string'])
+        check(['./test_terse_write'])
         check(['./test_uri'])
 
     def test_syntax_io(check, in_name, check_name, lang):
@@ -757,6 +767,8 @@ def test(tst):
     test_suite(tst, serd_base + 'bad/', 'bad', None, 'Turtle')
     test_suite(tst, serd_base + 'lax/', 'lax', None, 'Turtle', ['-l'])
     test_suite(tst, serd_base + 'lax/', 'lax', None, 'Turtle')
+    test_suite(tst, serd_base + 'terse/', 'terse', None, 'Turtle', ['-t'],
+               output_syntax='Turtle')
 
     # Standard test suites
     with open('earl.ttl', 'w') as report:
