@@ -196,8 +196,8 @@ main(int argc, char** argv)
 	}
 
 	const SerdWriterFlags writer_flags =
-	    ((ascii ? SERD_STYLE_ASCII : 0u) | //
-	     (full_uris ? (SERD_STYLE_UNQUALIFIED | SERD_STYLE_UNRESOLVED) : 0u));
+	    ((ascii ? SERD_WRITE_ASCII : 0u) | //
+	     (full_uris ? (SERD_WRITE_UNQUALIFIED | SERD_WRITE_UNRESOLVED) : 0u));
 
 	SerdNode* base = NULL;
 	if (a < argc) {  // Base URI given on command line

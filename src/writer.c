@@ -234,7 +234,7 @@ write_character(SerdWriter* writer, const uint8_t* utf8, size_t* size)
 		break;
 	}
 
-	if (!(writer->flags & SERD_STYLE_ASCII)) {
+	if (!(writer->flags & SERD_WRITE_ASCII)) {
 		// Write UTF-8 character directly to UTF-8 output
 		return sink(utf8, *size, writer);
 	}
@@ -576,7 +576,7 @@ write_uri_node(SerdWriter* const        writer,
 			return sink("a", 1, writer) == 1;
 		} else if (serd_node_equals(node, writer->world->rdf_type)) {
 			return sink("()", 2, writer) == 2;
-		} else if (has_scheme && !(writer->flags & SERD_STYLE_UNQUALIFIED) &&
+		} else if (has_scheme && !(writer->flags & SERD_WRITE_UNQUALIFIED) &&
 		           serd_env_qualify_in_place(
 		               writer->env, node, &prefix, &suffix) &&
 		           is_name(serd_node_string(prefix),
@@ -599,7 +599,7 @@ write_uri_node(SerdWriter* const        writer,
 	}
 
 	sink("<", 1, writer);
-	if (!(writer->flags & SERD_STYLE_UNRESOLVED) &&
+	if (!(writer->flags & SERD_WRITE_UNRESOLVED) &&
 	    serd_env_base_uri(writer->env)) {
 		const SerdURI* base_uri = serd_env_get_parsed_base_uri(writer->env);
 		SerdURI uri;

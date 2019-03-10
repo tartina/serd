@@ -279,9 +279,9 @@ typedef struct {
    does not support abbreviation and is always ASCII.
 */
 typedef enum {
-	SERD_STYLE_ASCII       = 1u << 0u, ///< Escape all non-ASCII characters
-	SERD_STYLE_UNQUALIFIED = 1u << 1u, ///< Do not shorten URIs into CURIEs
-	SERD_STYLE_UNRESOLVED  = 1u << 2u  ///< Do not make URIs relative
+	SERD_WRITE_ASCII       = 1u << 0u, ///< Escape all non-ASCII characters
+	SERD_WRITE_UNQUALIFIED = 1u << 1u, ///< Do not shorten URIs into CURIEs
+	SERD_WRITE_UNRESOLVED  = 1u << 2u  ///< Do not make URIs relative
 } SerdWriterFlag;
 
 /// Bitwise OR of SerdWriterFlag values
