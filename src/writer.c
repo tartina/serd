@@ -40,14 +40,16 @@ typedef enum {
 
 typedef struct
 {
-	ContextType type;
-	SerdNode*   graph;
-	SerdNode*   subject;
-	SerdNode*   predicate;
-	bool        indented_object;
+	ContextType        type;
+	SerdStatementFlags flags;
+	SerdNode*          graph;
+	SerdNode*          subject;
+	SerdNode*          predicate;
+	bool               indented_object;
 } WriteContext;
 
 static const WriteContext WRITE_CONTEXT_NULL = {CTX_NAMED,
+                                                0,
                                                 NULL,
                                                 NULL,
                                                 NULL,
@@ -162,11 +164,12 @@ free_context(SerdWriter* writer)
 }
 
 static SerdStatus
-push_context(SerdWriter* const     writer,
-             const ContextType     type,
-             const SerdNode* const g,
-             const SerdNode* const s,
-             const SerdNode* const p)
+push_context(SerdWriter* const        writer,
+             const ContextType        type,
+             const SerdStatementFlags flags,
+             const SerdNode* const    g,
+             const SerdNode* const    s,
+             const SerdNode* const    p)
 {
 	WriteContext* top = (WriteContext*)serd_stack_push(&writer->anon_stack,
 	                                                   sizeof(WriteContext));
@@ -177,8 +180,12 @@ push_context(SerdWriter* const     writer,
 
 	*top = writer->context;
 
-	const WriteContext new_context = {
-	    type, serd_node_copy(g), serd_node_copy(s), serd_node_copy(p), false};
+	const WriteContext new_context = {type,
+	                                  flags,
+	                                  serd_node_copy(g),
+	                                  serd_node_copy(s),
+	                                  serd_node_copy(p),
+	                                  false};
 
 	writer->context = new_context;
 	return SERD_SUCCESS;
@@ -896,11 +903,11 @@ serd_writer_write_statement(SerdWriter*          writer,
 	}
 
 	if (flags & SERD_LIST_S) {
-		if ((st = push_context(writer, CTX_LIST, graph, subject, NULL))) {
+		if ((st = push_context(writer, CTX_LIST, flags, graph, subject, NULL))) {
 			return st;
 		}
 	} if (flags & SERD_LIST_O) {
-		if ((st = push_context(writer, CTX_LIST, graph, object, NULL))) {
+		if ((st = push_context(writer, CTX_LIST, flags, graph, object, NULL))) {
 			return st;
 		}
 	}
@@ -911,6 +918,7 @@ serd_writer_write_statement(SerdWriter*          writer,
 
 		if ((st = push_context(writer,
 		                       is_list ? CTX_LIST : CTX_BLANK,
+		                       flags,
 		                       graph,
 		                       subject,
 		                       is_subject ? predicate : NULL))) {
