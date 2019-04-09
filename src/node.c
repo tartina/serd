@@ -19,6 +19,7 @@
 #include "serd_internal.h"
 #include "static_nodes.h"
 #include "string_utils.h"
+#include "system.h"
 
 #include "serd/serd.h"
 
@@ -31,37 +32,34 @@
 #include <stdlib.h>
 #include <string.h>
 
-static const size_t serd_node_align = sizeof(SerdNode);
-
 static SerdNode*
 serd_new_from_uri(const SerdURI* uri, const SerdURI* base);
 
 static size_t
 serd_node_pad_size(const size_t n_bytes)
 {
-	const size_t pad = serd_node_align - (n_bytes + 2) % serd_node_align;
-	const size_t size = n_bytes + 2 + pad;
-	assert(size % serd_node_align == 0);
-	return size;
+	const size_t pad = sizeof(SerdNode) - (n_bytes + 2) % sizeof(SerdNode);
+
+	return n_bytes + 2 + pad;
 }
 
 static const SerdNode*
 serd_node_meta_c(const SerdNode* node)
 {
-	return node + 1 + (serd_node_pad_size(node->n_bytes) / serd_node_align);
+	return node + 1 + (serd_node_pad_size(node->n_bytes) / sizeof(SerdNode));
 }
 
 static SerdNode*
 serd_node_meta(SerdNode* node)
 {
-	return node + 1 + (serd_node_pad_size(node->n_bytes) / serd_node_align);
+	return node + 1 + (serd_node_pad_size(node->n_bytes) / sizeof(SerdNode));
 }
 
 static const SerdNode*
 serd_node_maybe_get_meta_c(const SerdNode* node)
 {
 	return (node->flags & (SERD_HAS_LANGUAGE | SERD_HAS_DATATYPE))
-		? (node + 1 + (serd_node_pad_size(node->n_bytes) / serd_node_align))
+		? (node + 1 + (serd_node_pad_size(node->n_bytes) / sizeof(SerdNode)))
 		: NULL;
 }
 
@@ -94,11 +92,12 @@ SerdNode*
 serd_node_malloc(size_t n_bytes, SerdNodeFlags flags, SerdNodeType type)
 {
 	const size_t size = sizeof(SerdNode) + serd_node_pad_size(n_bytes);
-	SerdNode*    node = (SerdNode*)calloc(1, size);
+	SerdNode*    node = (SerdNode*)serd_calloc_aligned(serd_node_align, size);
+
 	node->n_bytes = 0;
 	node->flags   = flags;
 	node->type    = type;
-	assert((uintptr_t)node % serd_node_align == 0u);
+
 	return node;
 }
 
@@ -108,7 +107,8 @@ serd_node_set(SerdNode** dst, const SerdNode* src)
 	if (src) {
 		const size_t size = serd_node_total_size(src);
 		if (!(*dst) || serd_node_total_size(*dst) < size) {
-			(*dst) = (SerdNode*)realloc(*dst, size);
+			serd_free_aligned(*dst);
+			*dst = (SerdNode*)serd_calloc_aligned(serd_node_align, size);
 		}
 
 		memcpy(*dst, src, size);
@@ -184,7 +184,7 @@ serd_new_plain_literal_i(const char*   str,
 	memcpy(serd_node_buffer(node), str, str_len);
 	node->n_bytes = str_len;
 
-	SerdNode* lang_node = node + 1 + (len / serd_node_align);
+	SerdNode* lang_node = node + 1 + (len / sizeof(SerdNode));
 	lang_node->type     = SERD_LITERAL;
 	lang_node->n_bytes  = lang_len;
 	memcpy(serd_node_buffer(lang_node), lang, lang_len);
@@ -215,7 +215,7 @@ serd_new_typed_literal_i(const char*   str,
 	memcpy(serd_node_buffer(node), str, str_len);
 	node->n_bytes = str_len;
 
-	SerdNode* datatype_node = node + 1 + (len / serd_node_align);
+	SerdNode* datatype_node = node + 1 + (len / sizeof(SerdNode));
 	datatype_node->n_bytes  = datatype_uri_len;
 	datatype_node->type     = SERD_URI;
 	memcpy(serd_node_buffer(datatype_node), datatype_uri, datatype_uri_len);
@@ -339,9 +339,11 @@ serd_node_copy(const SerdNode* node)
 		return NULL;
 	}
 
-	const size_t size = serd_node_total_size(node);
 	serd_node_check_padding(node);
-	SerdNode*    copy = (SerdNode*)calloc(1, size + 3);
+
+	const size_t size = serd_node_total_size(node);
+	SerdNode* copy = (SerdNode*)serd_calloc_aligned(serd_node_align, size);
+
 	memcpy(copy, node, size);
 	return copy;
 }
@@ -751,5 +753,5 @@ serd_node_flags(const SerdNode* node)
 void
 serd_node_free(SerdNode* node)
 {
-	free(node);
+	serd_free_aligned(node);
 }

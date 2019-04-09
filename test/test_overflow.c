@@ -40,19 +40,21 @@ main(void)
 		size_t      stack_size;
 	} Test;
 
-	const Test tests[] = {{":s :p :%99 .", 338},
-	                      {":s :p <http://", 336},
-	                      {":s :p eg:foo", 337},
-	                      {":s :p 1234", 307},
-	                      {":s :p 1234", 338},
-	                      {":s :p (1 2 3 4) .", 352},
-	                      {"@prefix eg: <http://example.org> .", 239},
-	                      {":s :p \"literal\"", 336},
-	                      {":s :p \"verb\"", 275},
-	                      {":s :p _:blank .", 307},
-	                      {":s :p true .", 307},
-	                      {":s :p true .", 341},
-	                      {":s :p \"\"@en .", 339},
+	const size_t sizes = 3 * sizeof(size_t);
+
+	const Test tests[] = {{":s :p :%99 .", sizes + 280},
+	                      {":s :p <http://", sizes + 276},
+	                      {":s :p eg:foo", sizes + 275},
+	                      {":s :p 1234", sizes + 177},
+	                      {":s :p 1234", sizes + 280},
+	                      {":s :p (1 2 3 4) .", 8 * sizeof(size_t) + 357},
+	                      {"@prefix eg: <http://example.org> .", sizes + 224},
+	                      {":s :p \"literal\"", sizes + 264},
+	                      {":s :p \"verb\"", sizes + 263},
+	                      {":s :p _:blank .", sizes + 276},
+	                      {":s :p true .", sizes + 295},
+	                      {":s :p true .", sizes + 329},
+	                      {":s :p \"\"@en .", sizes + 302},
 	                      {NULL, 0}};
 
 	SerdWorld* world = serd_world_new();

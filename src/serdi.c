@@ -14,6 +14,7 @@
   OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
+#include "serd_config.h"
 #include "system.h"
 
 #include "serd/serd.h"

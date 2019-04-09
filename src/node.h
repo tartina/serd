@@ -28,6 +28,14 @@ struct SerdNodeImpl {
 	SerdNodeType  type;     /**< Node type */
 };
 
+/* We need nodes aligned to at least size_t so that this is not an unaligned
+   access.  Though it would be possible to make the node header fixed-size and
+   fit entirely in 64 bits, saving some memory in the process, using weird
+   types here needs a lot of sketchy casting, particularly since size_t is
+   universal for string lengths in C.  So, we simply suffer the hassle (and
+   overhead) internally for now to prevent the API from being too weird. */
+static const size_t serd_node_align = sizeof(size_t);
+
 static inline char*
 serd_node_buffer(SerdNode* node)
 {

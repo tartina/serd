@@ -83,8 +83,9 @@ push_node_padded(SerdReader* reader, size_t maxlen,
 	}
 	*terminator = 0;
 
-	void* mem = serd_stack_push_aligned(
-		&reader->stack, sizeof(SerdNode) + maxlen + 1, sizeof(SerdNode));
+	void* mem = serd_stack_push_aligned(&reader->stack,
+	                                    sizeof(SerdNode) + maxlen + 1,
+	                                    sizeof(SerdNode));
 
 	if (!mem) {
 		return NULL;
@@ -161,14 +162,25 @@ serd_reader_new(SerdWorld*      world,
                 const SerdSink* sink,
                 size_t          stack_size)
 {
+	if (stack_size < 8 * sizeof(SerdNode)) {
+		return NULL;
+	}
+
 	SerdReader* me = (SerdReader*)calloc(1, sizeof(SerdReader));
 
 	me->world         = world;
 	me->sink          = sink;
-	me->stack         = serd_stack_new(stack_size);
+	me->stack         = serd_stack_new(stack_size, serd_node_align);
 	me->syntax        = syntax;
 	me->next_id       = 1;
 	me->strict        = true;
+
+	/* Reserve a bit of space at the end of the stack to zero pad nodes.  This
+	   particular kind of overflow could be detected (in emit_statement), but
+	   this is simpler and a bit more resilient to mistakes since the reader
+	   generally pushes only a few bytes at a time, making it pretty unlikely
+	   to overshoot the buffer by this much. */
+	me->stack.buf_size -= 8 * sizeof(size_t);
 
 	me->rdf_first = push_node(me, SERD_URI, NS_RDF "first", 48);
 	me->rdf_rest  = push_node(me, SERD_URI, NS_RDF "rest", 47);
