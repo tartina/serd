@@ -739,6 +739,8 @@ def test(tst):
         if os.path.exists('/dev/full'):
             check([serdi, 'file://%s/test/good/manifest.ttl' % srcdir],
                   stdout='/dev/full', name='Write error')
+            check([serdi, 'file://%s/test/good/manifest.ttl' % srcdir],
+                  stdout='/dev/full', name='Long write error')
 
     if sys.version_info.major >= 3:
         from waflib.extras import autoship
