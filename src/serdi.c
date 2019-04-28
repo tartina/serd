@@ -89,13 +89,13 @@ main(int argc, char** argv)
 
 	SerdSyntax      input_syntax  = (SerdSyntax)0;
 	SerdSyntax      output_syntax = (SerdSyntax)0;
-	SerdWriterFlags writer_flags  = SERD_WRITE_STRICT;
+	SerdReaderFlags reader_flags  = 0;
+	SerdWriterFlags writer_flags  = 0;
 	bool            from_string   = false;
 	bool            from_stdin    = false;
 	bool            bulk_read     = true;
 	bool            bulk_write    = false;
 	bool            no_inline     = false;
-	bool            lax           = false;
 	bool            use_model     = false;
 	bool            quiet         = false;
 	size_t          stack_size    = 4194304;
@@ -118,8 +118,8 @@ main(int argc, char** argv)
 		} else if (argv[a][1] == 'h') {
 			return print_usage(argv[0], false);
 		} else if (argv[a][1] == 'l') {
-			writer_flags &= ~(unsigned)SERD_WRITE_STRICT;
-			lax = true;
+			reader_flags |= SERD_READ_LAX;
+			writer_flags |= SERD_WRITE_LAX;
 		} else if (argv[a][1] == 'm') {
 			use_model = true;
 		} else if (argv[a][1] == 'q') {
@@ -240,9 +240,8 @@ main(int argc, char** argv)
 	}
 
 	SerdReader* const reader =
-	    serd_reader_new(world, input_syntax, sink, stack_size);
+	    serd_reader_new(world, input_syntax, reader_flags, sink, stack_size);
 
-	serd_reader_set_strict(reader, !lax);
 	if (quiet) {
 		serd_world_set_log_func(world, serd_quiet_error_func, NULL);
 	}

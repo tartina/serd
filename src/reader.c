@@ -159,6 +159,7 @@ serd_reader_read_document(SerdReader* reader)
 SerdReader*
 serd_reader_new(SerdWorld*      world,
                 SerdSyntax      syntax,
+                SerdReaderFlags flags,
                 const SerdSink* sink,
                 size_t          stack_size)
 {
@@ -173,7 +174,7 @@ serd_reader_new(SerdWorld*      world,
 	me->stack         = serd_stack_new(stack_size, serd_node_align);
 	me->syntax        = syntax;
 	me->next_id       = 1;
-	me->strict        = true;
+	me->strict        = !(flags & SERD_READ_LAX);
 
 	/* Reserve a bit of space at the end of the stack to zero pad nodes.  This
 	   particular kind of overflow could be detected (in emit_statement), but
@@ -187,12 +188,6 @@ serd_reader_new(SerdWorld*      world,
 	me->rdf_nil   = push_node(me, SERD_URI, NS_RDF "nil", 46);
 
 	return me;
-}
-
-void
-serd_reader_set_strict(SerdReader* reader, bool strict)
-{
-	reader->strict = strict;
 }
 
 void
