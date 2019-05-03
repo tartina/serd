@@ -470,7 +470,8 @@ def test_thru(check,
         '-i', isyntax,
         '-o', isyntax,
         '-p', 'foo',
-        check.tst.src_path(path), base]
+        '-I', base,
+        check.tst.src_path(path)]
 
     thru_path = path + '.thru'
     thru_cmd = [serdi] + opts + osyntax_opts + [
@@ -478,8 +479,8 @@ def test_thru(check,
         '-o', osyntax,
         '-c', 'foo',
         '-a',
-        out_path,
-        base]
+        '-I', base,
+        out_path]
 
     return (check(out_cmd, stdout=out_path, verbosity=0, name=out_path) and
             check(thru_cmd, stdout=thru_path, verbosity=0, name=thru_path) and
@@ -603,8 +604,9 @@ def test_suite(ctx,
                 rel_action  = os.path.join(os.path.relpath(srcdir), action)
                 uri         = base_uri + os.path.basename(action)
                 command     = ([serdi, '-a', '-o', osyntax] +
+                               ['-I', uri] +
                                options +
-                               [rel_action, uri])
+                               [rel_action])
 
                 # Run strict test
                 if expected_return == 0:
@@ -692,7 +694,7 @@ def test(tst):
         out_path = in_path + '.io'
         check_path = '%s/test/good/%s' % (srcdir, check_name)
 
-        check([serdi, '-o', lang, '%s/%s' % (srcdir, in_path), in_path],
+        check([serdi, '-o', lang, '-I', in_path, '%s/%s' % (srcdir, in_path)],
               stdout=out_path, name=in_name)
 
         check.file_equals(check_path, out_path)
@@ -717,6 +719,7 @@ def test(tst):
         check([serdi])
         check([serdi, '/no/such/file'])
         check([serdi, 'ftp://example.org/unsupported.ttl'])
+        check([serdi, '-I'])
         check([serdi, '-c'])
         check([serdi, '-i', 'illegal'])
         check([serdi, '-i', 'turtle'])
@@ -732,6 +735,7 @@ def test(tst):
         check([serdi, '-r'])
         check([serdi, '-z'])
         check([serdi, '-s', '<foo> a <Bar> .'])
+        check([serdi] + ['%s/test/bad/bad-base.ttl' % srcdir] * 2)
 
     with tst.group('IoErrors', expected=1) as check:
         check([serdi, '-e', 'file://%s/' % srcdir], name='Read directory')
