@@ -660,7 +660,7 @@ def test(tst):
     import tempfile
 
     # Create test output directories
-    for i in ['bad', 'good', 'lax', 'terse',
+    for i in ['bad', 'good', 'lax', 'terse', 'multifile',
               'TurtleTests', 'NTriplesTests', 'NQuadsTests', 'TriGTests']:
         try:
             test_dir = os.path.join('test', i)
@@ -719,6 +719,13 @@ def test(tst):
             check(cmd, stdout=stdout)
             stdout.seek(0, 2)  # Seek to end
             check(lambda: stdout.tell() == 0, name='empty output')
+
+    with tst.group('MultiFile') as check:
+        path = '%s/test/multifile' % srcdir
+        check([serdi, '%s/input1.ttl' % path, '%s/input2.trig' % path],
+              stdout='test/multifile/output.out.nq')
+        check.file_equals('%s/test/multifile/output.nq' % srcdir,
+                          'test/multifile/output.out.nq')
 
     with tst.group('BadCommands',
                    expected=1,
