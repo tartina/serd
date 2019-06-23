@@ -76,6 +76,7 @@ def configure(conf):
             'msvc': [
                 '/wd4061',  # enumerator in switch is not explicitly handled
                 '/wd4200',  # nonstandard: zero-sized array in struct/union
+                '/wd4464',  # relative include path contains '..'
                 '/wd4514',  # unreferenced inline function has been removed
                 '/wd4710',  # function not inlined
                 '/wd4711',  # function selected for automatic inline expansion
@@ -194,6 +195,7 @@ lib_source = ['src/base64.c',
               'src/byte_sink.c',
               'src/byte_source.c',
               'src/cursor.c',
+              'src/decimal.c',
               'src/env.c',
               'src/inserter.c',
               'src/int_math.c',
@@ -281,6 +283,7 @@ def build(bld):
         for prog in [('serdi_static', 'src/serdi.c'),
                      ('test_base64', 'test/test_base64.c'),
                      ('test_cursor', 'test/test_cursor.c'),
+                     ('test_decimal', 'test/test_decimal.c'),
                      ('test_env', 'test/test_env.c'),
                      ('test_free_null', 'test/test_free_null.c'),
                      ('test_int_math', 'test/test_int_math.c'),
@@ -721,6 +724,7 @@ def test(tst):
     with tst.group('Unit') as check:
         check(['./test_base64'])
         check(['./test_cursor'])
+        check(['./test_decimal'])
         check(['./test_env'])
         check(['./test_free_null'])
         check(['./test_int_math'])
