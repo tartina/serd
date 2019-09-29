@@ -17,7 +17,7 @@
 #ifndef SERD_SOFT_FLOAT_H
 #define SERD_SOFT_FLOAT_H
 
-#include "serd/serd.h"
+#include "attributes.h"
 
 #include <stdint.h>
 
@@ -32,7 +32,7 @@ static const int max_dec_expt  = 340;
 static const int dec_expt_step = 8;
 
 /// Convert `d` to a soft float
-SERD_CONST_FUNC SerdSoftFloat
+SERD_I_CONST_FUNC SerdSoftFloat
 soft_float_from_double(double d);
 
 /// Convert `v` to a double
@@ -40,15 +40,15 @@ double
 soft_float_to_double(SerdSoftFloat v);
 
 /// Normalize `value` so the MSb of its significand is 1
-SERD_CONST_FUNC SerdSoftFloat
+SERD_I_CONST_FUNC SerdSoftFloat
 soft_float_normalize(SerdSoftFloat value);
 
 /// Multiply `lhs` by `rhs` and return the result
-SERD_CONST_FUNC SerdSoftFloat
+SERD_I_CONST_FUNC SerdSoftFloat
 soft_float_multiply(SerdSoftFloat lhs, SerdSoftFloat rhs);
 
 /// Return exactly 10^e for e in [0...dec_expt_step]
-SERD_CONST_FUNC SerdSoftFloat
+SERD_I_CONST_FUNC SerdSoftFloat
 soft_float_exact_pow10(int expt);
 
 /**

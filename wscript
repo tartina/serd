@@ -194,6 +194,7 @@ def configure(conf):
 lib_headers = ['src/reader.h']
 
 lib_source = ['src/base64.c',
+              'src/bigint.c',
               'src/byte_sink.c',
               'src/byte_source.c',
               'src/cursor.c',
@@ -285,6 +286,7 @@ def build(bld):
         # Test programs
         for prog in [('serdi_static', 'src/serdi.c'),
                      ('test_base64', 'test/test_base64.c'),
+                     ('test_bigint', 'test/test_bigint.c'),
                      ('test_cursor', 'test/test_cursor.c'),
                      ('test_decimal', 'test/test_decimal.c'),
                      ('test_env', 'test/test_env.c'),
@@ -727,6 +729,7 @@ def test(tst):
 
     with tst.group('Unit') as check:
         check(['./test_base64'])
+        check(['./test_bigint'])
         check(['./test_cursor'])
         check(['./test_decimal'])
         check(['./test_env'])

@@ -22,6 +22,7 @@
 #include <stdint.h>
 
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
+#define MAX(x, y) ((x) > (y) ? (x) : (y))
 
 static const uint64_t POW10[] = {1ull,
                                  10ull,

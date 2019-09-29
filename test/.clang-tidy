@@ -3,6 +3,7 @@ Checks: >
   -*-magic-numbers,
   -*-uppercase-literal-suffix,
   -android-cloexec-fopen,
+  -bugprone-suspicious-string-compare,
   -clang-analyzer-nullability.NullabilityBase,
   -clang-analyzer-nullability.NullableDereferenced,
   -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,

@@ -18,9 +18,13 @@
 #define SERD_ATTRIBUTES_H
 
 #ifdef __GNUC__
-#    define SERD_MALLOC_FUNC __attribute__((malloc))
+#    define SERD_I_PURE_FUNC __attribute__((pure))
+#    define SERD_I_CONST_FUNC __attribute__((const))
+#    define SERD_I_MALLOC_FUNC __attribute__((malloc))
 #else
-#    define SERD_MALLOC_FUNC
+#    define SERD_I_PURE_FUNC
+#    define SERD_I_CONST_FUNC
+#    define SERD_I_MALLOC_FUNC
 #endif
 
 #endif // SERD_ATTRIBUTES_H
