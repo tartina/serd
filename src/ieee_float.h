@@ -34,7 +34,7 @@ static const int      dbl_subnormal_expt    = -0x3FF - DBL_MANT_DIG + 2;
 static inline uint64_t
 double_to_rep(const double d)
 {
-	uint64_t rep;
+	uint64_t rep = 0;
 	memcpy(&rep, &d, sizeof(rep));
 	return rep;
 }

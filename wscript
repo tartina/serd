@@ -61,6 +61,7 @@ def configure(conf):
                 '-Wno-covered-switch-default',
                 '-Wno-disabled-macro-expansion',
                 '-Wno-double-promotion',
+                '-Wno-float-equal',
                 '-Wno-format-nonliteral',
                 '-Wno-implicit-fallthrough',
                 '-Wno-nullability-extension',
@@ -70,6 +71,7 @@ def configure(conf):
             ],
             'gcc': [
                 '-Wno-cast-align',
+                '-Wno-float-equal',
                 '-Wno-inline',
                 '-Wno-padded',
             ],
@@ -207,6 +209,7 @@ lib_source = ['src/base64.c',
               'src/range.c',
               'src/reader.c',
               'src/sink.c',
+              'src/soft_float.c',
               'src/statement.c',
               'src/string.c',
               'src/syntax.c',
@@ -294,6 +297,7 @@ def build(bld):
                      ('test_read_chunk', 'test/test_read_chunk.c'),
                      ('test_reader_writer', 'test/test_reader_writer.c'),
                      ('test_sink', 'test/test_sink.c'),
+                     ('test_soft_float', 'test/test_soft_float.c'),
                      ('test_statement', 'test/test_statement.c'),
                      ('test_string', 'test/test_string.c'),
                      ('test_terse_write', 'test/test_terse_write.c'),
@@ -735,6 +739,7 @@ def test(tst):
         check(['./test_read_chunk'])
         check(['./test_reader_writer'])
         check(['./test_sink'])
+        check(['./test_soft_float'])
         check(['./test_statement'])
         check(['./test_string'])
         check(['./test_terse_write'])
