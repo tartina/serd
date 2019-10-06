@@ -19,109 +19,13 @@
 #include "serd/serd.h"
 
 #include <assert.h>
-#include <float.h>
-#include <math.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#ifndef INFINITY
-#	define INFINITY (DBL_MAX + DBL_MAX)
-#endif
-#ifndef NAN
-#	define NAN (INFINITY - INFINITY)
-#endif
-
 #define NS_XSD "http://www.w3.org/2001/XMLSchema#"
-
-static void
-test_strtod(double dbl, double max_delta)
-{
-	char buf[1024];
-	snprintf(buf, sizeof(buf), "%f", dbl);
-
-	size_t       end = 0;
-	const double out = serd_strtod(buf, &end);
-
-	const double diff = fabs(out - dbl);
-	assert(diff <= max_delta);
-	assert(end == strlen(buf));
-}
-
-static void
-test_string_to_double(void)
-{
-	size_t end = 0;
-	assert(isnan(serd_strtod("NaN", &end)));
-	assert(end == 3);
-
-	assert(isinf(serd_strtod("INF", &end)) == 1);
-	assert(end == 3);
-
-#ifdef _WIN32
-	assert(isinf(serd_strtod("-INF", &end)));
-#else
-	assert(isinf(serd_strtod("-INF", &end)) == -1);
-#endif
-	assert(end == 4);
-
-	const double expt_test_nums[] = {
-	    2.0E18, -5e19, +8e20, 2e+24, -5e-5, 8e0, 9e-0, 2e+0};
-
-	const char* expt_test_strs[] = {
-	    "02e18", "-5e019", "+8e20", "2E+24", "-5E-5", "8E0", "9e-0", " 2e+0"};
-
-	for (size_t i = 0; i < sizeof(expt_test_nums) / sizeof(double); ++i) {
-		const double num   = serd_strtod(expt_test_strs[i], NULL);
-		const double delta = fabs(num - expt_test_nums[i]);
-		assert(delta <= DBL_EPSILON);
-
-		test_strtod(expt_test_nums[i], DBL_EPSILON);
-	}
-}
-
-static void
-test_double_to_node(void)
-{
-	const double dbl_test_nums[] = { 0.0,
-	                                 9.0,
-	                                 10.0,
-	                                 .01,
-	                                 2.05,
-	                                 -16.00001,
-	                                 5.000000005,
-	                                 0.0000000001,
-	                                 (double)NAN,
-	                                 (double)INFINITY };
-
-	const char* dbl_test_strs[] = { "0.0",
-	                                "9.0",
-	                                "10.0",
-	                                "0.01",
-	                                "2.05",
-	                                "-16.00001",
-	                                "5.0",
-	                                "0.0",
-	                                NULL,
-	                                NULL };
-
-	for (size_t i = 0; i < sizeof(dbl_test_nums) / sizeof(double); ++i) {
-		SerdNode*   node     = serd_new_decimal(dbl_test_nums[i], 17, 8, NULL);
-		const char* node_str = node ? serd_node_string(node) : NULL;
-		const bool  pass     = (node_str && dbl_test_strs[i])
-		                      ? !strcmp(node_str, dbl_test_strs[i])
-		                      : (node_str == dbl_test_strs[i]);
-		assert(pass);
-		const size_t len = node_str ? strlen(node_str) : 0;
-		assert(serd_node_length(node) == len);
-		assert(!dbl_test_strs[i] ||
-		       !strcmp(serd_node_string(serd_node_datatype(node)),
-		               NS_XSD "decimal"));
-		serd_node_free(node);
-	}
-}
 
 static void
 test_integer_to_node(void)
@@ -298,8 +202,6 @@ test_blank(void)
 int
 main(void)
 {
-	test_string_to_double();
-	test_double_to_node();
 	test_integer_to_node();
 	test_blob_to_node();
 	test_boolean();
