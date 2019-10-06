@@ -59,8 +59,6 @@ def configure(conf):
             'clang': [
                 '-Wno-cast-align',
                 '-Wno-covered-switch-default',
-                '-Wno-disabled-macro-expansion',
-                '-Wno-double-promotion',
                 '-Wno-float-equal',
                 '-Wno-format-nonliteral',
                 '-Wno-implicit-fallthrough',
