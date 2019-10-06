@@ -1,5 +1,5 @@
 /*
-  Copyright 2011-2019 David Robillard <http://drobilla.net>
+  Copyright 2011-2020 David Robillard <http://drobilla.net>
 
   Permission to use, copy, modify, and/or distribute this software for any
   purpose with or without fee is hereby granted, provided that the above
@@ -16,11 +16,15 @@
 
 #undef NDEBUG
 
-#include "serd/serd.h"
-
 #include "../src/decimal.h"
 
+#include "serd/serd.h"
+
 #include <assert.h>
+#include <math.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <string.h>
 
 static void
 test_count_digits(void)
@@ -50,8 +54,50 @@ test_count_digits(void)
 	assert(20 == serd_count_digits(18446744073709551615ull));
 }
 
-SERD_PURE_FUNC int
+static void
+check_precision(const double   d,
+                const unsigned precision,
+                const unsigned frac_digits,
+                const char*    expected)
+{
+	SerdNode* const node = serd_new_decimal(d, precision, frac_digits, NULL);
+	const char*     str  = serd_node_string(node);
+
+	if (strcmp(str, expected)) {
+		fprintf(stderr, "error: string is \"%s\"\n", str);
+		fprintf(stderr, "note:  expected  \"%s\"\n", expected);
+		assert(false);
+	}
+
+	serd_node_free(node);
+}
+
+static void
+test_precision(void)
+{
+	assert(serd_new_decimal((double)INFINITY, 17, 0, NULL) == NULL);
+	assert(serd_new_decimal((double)-INFINITY, 17, 0, NULL) == NULL);
+	assert(serd_new_decimal((double)NAN, 17, 0, NULL) == NULL);
+
+	check_precision(1.0000000001, 17, 8, "1.0");
+	check_precision(0.0000000001, 17, 10, "0.0000000001");
+	check_precision(0.0000000001, 17, 8, "0.0");
+
+	check_precision(12345.678900, 9, 5, "12345.6789");
+	check_precision(12345.678900, 8, 5, "12345.678");
+	check_precision(12345.678900, 5, 5, "12345.0");
+	check_precision(12345.678900, 3, 5, "12300.0");
+
+	check_precision(12345.678900, 9, 0, "12345.6789");
+	check_precision(12345.678900, 9, 5, "12345.6789");
+	check_precision(12345.678900, 9, 3, "12345.678");
+	check_precision(12345.678900, 9, 1, "12345.6");
+}
+
+int
 main(void)
 {
 	test_count_digits();
+	test_precision();
+	return 0;
 }
