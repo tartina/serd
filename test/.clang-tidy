@@ -12,6 +12,7 @@ Checks: >
   -hicpp-signed-bitwise,
   -llvm-header-guard,
   -llvmlibc-*,
+  -readability-else-after-return,
 WarningsAsErrors: '*'
 HeaderFilterRegex: '.*'
 FormatStyle: file

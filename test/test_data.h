@@ -14,6 +14,12 @@
   OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
+#include "../src/attributes.h"
+#include "../src/ieee_float.h"
+#include "../src/soft_float.h"
+
+#include <assert.h>
+#include <math.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -53,4 +59,25 @@ double_from_rep(const uint64_t rep)
 	double d = 0.0;
 	memcpy(&d, &rep, sizeof(d));
 	return d;
+}
+
+/// Return the distance between two doubles in ULPs
+static SERD_I_PURE_FUNC uint64_t
+ulp_distance(const double a, const double b)
+{
+	assert(a >= 0.0);
+	assert(b >= 0.0);
+
+	if (a == b) {
+		return 0;
+	}
+
+	if (isnan(a) || isnan(b) || isinf(a) || isinf(b)) {
+		return UINT64_MAX;
+	}
+
+	const uint64_t ia = double_to_rep(a);
+	const uint64_t ib = double_to_rep(b);
+
+	return ia > ib ? ia - ib : ib - ia;
 }
