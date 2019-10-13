@@ -141,6 +141,15 @@ def configure(conf):
                                 defines     = ['_POSIX_C_SOURCE=200809L'],
                                 mandatory   = False)
 
+    conf.check_cc(msg         = 'Checking for __builtin_clz',
+                  define_name = 'HAVE_BUILTIN_CLZ',
+                  fragment    = 'int main(void) {return __builtin_clz(0);}',
+                  mandatory   = False)
+    conf.check_cc(msg         = 'Checking for __builtin_clzll',
+                  define_name = 'HAVE_BUILTIN_CLZLL',
+                  fragment    = 'int main(void) {return __builtin_clzll(0);}',
+                  mandatory   = False)
+
     if not Options.options.no_pcre:
         autowaf.check_pkg(conf, 'libpcre',
                           uselib_store='PCRE',
@@ -187,6 +196,7 @@ lib_source = ['src/base64.c',
               'src/cursor.c',
               'src/env.c',
               'src/inserter.c',
+              'src/int_math.c',
               'src/iter.c',
               'src/model.c',
               'src/n3.c',
@@ -273,6 +283,7 @@ def build(bld):
                      ('test_cursor', 'test/test_cursor.c'),
                      ('test_env', 'test/test_env.c'),
                      ('test_free_null', 'test/test_free_null.c'),
+                     ('test_int_math', 'test/test_int_math.c'),
                      ('test_model', 'test/test_model.c'),
                      ('test_node', 'test/test_node.c'),
                      ('test_nodes', 'test/test_nodes.c'),
@@ -711,6 +722,7 @@ def test(tst):
         check(['./test_cursor'])
         check(['./test_env'])
         check(['./test_free_null'])
+        check(['./test_int_math'])
         check(['./test_model'])
         check(['./test_node'])
         check(['./test_nodes'])
