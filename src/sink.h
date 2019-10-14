@@ -24,6 +24,7 @@
 */
 struct SerdSinkImpl {
 	void*             handle;
+	SerdFreeFunc      free_handle;
 	SerdBaseFunc      base;
 	SerdPrefixFunc    prefix;
 	SerdStatementFunc statement;

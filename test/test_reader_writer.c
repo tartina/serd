@@ -70,7 +70,7 @@ test_read_chunks(void)
 	size_t            n_statements = 0;
 	FILE* const       f            = tmpfile();
 	static const char null         = 0;
-	SerdSink*         sink         = serd_sink_new(&n_statements);
+	SerdSink*         sink         = serd_sink_new(&n_statements, NULL);
 
 	assert(sink);
 	serd_sink_set_statement_func(sink, count_statements);
@@ -153,7 +153,7 @@ test_read_string(void)
 {
 	SerdWorld*  world        = serd_world_new();
 	size_t      n_statements = 0;
-	SerdSink*   sink         = serd_sink_new(&n_statements);
+	SerdSink*   sink         = serd_sink_new(&n_statements, NULL);
 	SerdReader* reader       = serd_reader_new(world, SERD_TURTLE, sink, 4096);
 	assert(reader);
 
@@ -293,7 +293,7 @@ test_reader(const char* path)
 	SerdWorld*  world  = serd_world_new();
 
 	size_t    n_statements = 0;
-	SerdSink* sink         = serd_sink_new(&n_statements);
+	SerdSink* sink         = serd_sink_new(&n_statements, NULL);
 	serd_sink_set_statement_func(sink, count_statements);
 
 	SerdReader* reader = serd_reader_new(world, SERD_TURTLE, sink, 4096);

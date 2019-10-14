@@ -23,18 +23,26 @@
 #include <stdlib.h>
 
 SerdSink*
-serd_sink_new(void* handle)
+serd_sink_new(void* handle, SerdFreeFunc free_handle)
 {
 	SerdSink* sink = (SerdSink*)calloc(1, sizeof(SerdSink));
 
-	sink->handle = handle;
+	sink->handle      = handle;
+	sink->free_handle = free_handle;
+
 	return sink;
 }
 
 void
 serd_sink_free(SerdSink* sink)
 {
-	free(sink);
+	if (sink) {
+		if (sink->free_handle) {
+			sink->free_handle(sink->handle);
+		}
+
+		free(sink);
+	}
 }
 
 SerdStatus

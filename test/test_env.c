@@ -84,7 +84,7 @@ test_env(void)
 	serd_node_free(blank);
 
 	size_t    n_prefixes          = 0;
-	SerdSink* count_prefixes_sink = serd_sink_new(&n_prefixes);
+	SerdSink* count_prefixes_sink = serd_sink_new(&n_prefixes, NULL);
 	serd_sink_set_prefix_func(count_prefixes_sink, count_prefixes);
 	serd_env_set_prefix(env, pre, eg);
 	serd_env_write_prefixes(env, count_prefixes_sink);

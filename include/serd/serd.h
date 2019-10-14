@@ -1089,6 +1089,9 @@ serd_env_write_prefixes(const SerdEnv* SERD_NONNULL  env,
    @{
 */
 
+/// Function to free an opaque handle
+typedef void (*SerdFreeFunc)(void* SERD_NULLABLE ptr);
+
 /**
    Create a new sink.
 
@@ -1096,10 +1099,12 @@ serd_env_write_prefixes(const SerdEnv* SERD_NONNULL  env,
    serd_sink_set_*_func functions to set handlers for various events.
 
    @param handle Opaque handle that will be passed to sink functions.
+   @param free_handle Free function to call on handle in serd_sink_free().
 */
 SERD_API
 SerdSink* SERD_ALLOCATED
-serd_sink_new(void* SERD_NULLABLE handle);
+serd_sink_new(void* SERD_NULLABLE        handle,
+              SerdFreeFunc SERD_NULLABLE free_handle);
 
 /// Free `sink`
 SERD_API
