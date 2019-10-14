@@ -65,6 +65,7 @@ print_usage(const char* name, bool error)
 	fprintf(os, "  -k BYTES     Parser stack size.\n");
 	fprintf(os, "  -l           Lax (non-strict) parsing.\n");
 	fprintf(os, "  -m           Build and serialise a model (no streaming).\n");
+	fprintf(os, "  -n           Normalise literals.\n");
 	fprintf(os, "  -o SYNTAX    Output syntax: turtle/ntriples/nquads.\n");
 	fprintf(os, "  -p PREFIX    Add PREFIX to blank node IDs.\n");
 	fprintf(os, "  -q           Suppress all output except data.\n");
@@ -140,6 +141,7 @@ main(int argc, char** argv)
 	bool            osyntax_set   = false;
 	bool            validate      = false;
 	bool            use_model     = false;
+	bool            normalise     = false;
 	bool            quiet         = false;
 	size_t          stack_size    = 4194304;
 	const char*     input_string  = NULL;
@@ -172,6 +174,8 @@ main(int argc, char** argv)
 			writer_flags |= SERD_WRITE_LAX;
 		} else if (argv[a][1] == 'm') {
 			use_model = true;
+		} else if (argv[a][1] == 'n') {
+			normalise = true;
 		} else if (argv[a][1] == 'q') {
 			quiet = true;
 		} else if (argv[a][1] == 'v') {
@@ -275,7 +279,7 @@ main(int argc, char** argv)
 
 	SerdModel*      model    = NULL;
 	SerdSink*       inserter = NULL;
-	const SerdSink* sink     = NULL;
+	const SerdSink* out_sink = NULL;
 	if (use_model) {
 		const SerdModelFlags flags =
 		    SERD_INDEX_SPO | (input_has_graphs ? SERD_INDEX_GRAPHS : 0u) |
@@ -284,9 +288,16 @@ main(int argc, char** argv)
 
 		model    = serd_model_new(world, flags);
 		inserter = serd_inserter_new(model, env, NULL);
-		sink     = inserter;
+		out_sink = inserter;
 	} else {
-		sink = serd_writer_sink(writer);
+		out_sink = serd_writer_sink(writer);
+	}
+
+	const SerdSink* sink = out_sink;
+
+	SerdSink* normaliser = NULL;
+	if (normalise) {
+		sink = normaliser = serd_normaliser_new(out_sink, env);
 	}
 
 	if (quiet) {
@@ -363,6 +374,7 @@ main(int argc, char** argv)
 		serd_range_free(range);
 	}
 
+	serd_sink_free(normaliser);
 	serd_sink_free(inserter);
 	serd_model_free(model);
 	serd_writer_free(writer);

@@ -695,6 +695,12 @@ SerdNode* SERD_ALLOCATED
 serd_new_resolved_uri(const char* SERD_NONNULL      str,
                       const SerdNode* SERD_NULLABLE base);
 
+/// Return a normalised version of `node` if possible, NULL otherwise
+SERD_API
+SerdNode* SERD_ALLOCATED
+serd_node_normalise(const SerdEnv* SERD_NULLABLE env,
+                    const SerdNode* SERD_NONNULL node);
+
 /**
    Resolve `node` against `base`.
 
@@ -1279,6 +1285,23 @@ SERD_API
 SerdStatus
 serd_sink_write_end(const SerdSink* SERD_NONNULL sink,
                     const SerdNode* SERD_NONNULL node);
+
+/**
+   @}
+   @name Stream Processing
+   @{
+*/
+
+/**
+   Return a sink that normalises literal nodes in statements where possible.
+
+   The returned sink acts like `target` in all respects, except literal nodes
+   in statements may be modified from the original.
+*/
+SERD_API
+SerdSink* SERD_ALLOCATED
+serd_normaliser_new(const SerdSink* SERD_NONNULL target,
+                    const SerdEnv* SERD_NONNULL  env);
 
 /**
    @}
