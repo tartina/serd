@@ -18,9 +18,9 @@
 
 #include "world.h"
 
+#include "namespaces.h"
 #include "node.h"
 #include "serd_config.h"
-#include "serd_internal.h"
 
 #if defined(HAVE_POSIX_FADVISE)
 #   include <fcntl.h>

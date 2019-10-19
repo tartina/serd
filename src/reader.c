@@ -16,7 +16,7 @@
 
 #include "reader.h"
 
-#include "serd_internal.h"
+#include "namespaces.h"
 #include "stack.h"
 #include "statement.h"
 #include "system.h"
