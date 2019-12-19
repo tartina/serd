@@ -668,8 +668,6 @@ write_node(SerdWriter*        writer,
 {
 	bool ret = false;
 	switch (node->type) {
-	case SERD_NOTHING:
-		break;
 	case SERD_LITERAL:
 		ret = write_literal(writer, node, datatype, lang, flags);
 		break;

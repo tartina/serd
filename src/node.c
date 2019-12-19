@@ -383,7 +383,7 @@ serd_new_blob(const void* buf, size_t size, bool wrap_lines)
 SerdType
 serd_node_type(const SerdNode* node)
 {
-	return node ? node->type : SERD_NOTHING;
+	return node->type;
 }
 
 const char*

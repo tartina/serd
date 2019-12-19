@@ -223,7 +223,6 @@ serd_env_expand_node(const SerdEnv*  env,
                      const SerdNode* node)
 {
 	switch (node->type) {
-	case SERD_NOTHING:
 	case SERD_LITERAL:
 		break;
 	case SERD_URI: {
