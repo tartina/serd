@@ -51,6 +51,20 @@ test_strtod(double dbl, double max_delta)
 static void
 test_string_to_double(void)
 {
+	size_t end = 0;
+	assert(isnan(serd_strtod("NaN", &end)));
+	assert(end == 3);
+
+	assert(isinf(serd_strtod("INF", &end)) == 1);
+	assert(end == 3);
+
+#ifdef _WIN32
+	assert(isinf(serd_strtod("-INF", &end)));
+#else
+	assert(isinf(serd_strtod("-INF", &end)) == -1);
+#endif
+	assert(end == 4);
+
 	const double expt_test_nums[] = {
 		2.0E18, -5e19, +8e20, 2e+24, -5e-5, 8e0, 9e-0, 2e+0
 	};
