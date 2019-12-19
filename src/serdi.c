@@ -34,6 +34,13 @@
 #define SERDI_ERROR(msg)       fprintf(stderr, "serdi: " msg)
 #define SERDI_ERRORF(fmt, ...) fprintf(stderr, "serdi: " fmt, __VA_ARGS__)
 
+typedef struct {
+	SerdNode* s;
+	SerdNode* p;
+	SerdNode* o;
+	SerdNode* g;
+} FilterPattern;
+
 static int
 print_version(void)
 {
@@ -60,6 +67,7 @@ print_usage(const char* name, bool error)
 	fprintf(os, "  -c PREFIX    Chop PREFIX from matching blank node IDs.\n");
 	fprintf(os, "  -e           Eat input one character at a time.\n");
 	fprintf(os, "  -f           Keep full URIs in input (don't qualify).\n");
+	fprintf(os, "  -g PATTERN   Grep statements matching PATTERN.\n");
 	fprintf(os, "  -h           Display this help and exit.\n");
 	fprintf(os, "  -i SYNTAX    Input syntax: turtle/ntriples/trig/nquads.\n");
 	fprintf(os, "  -k BYTES     Parser stack size.\n");
@@ -83,6 +91,56 @@ missing_arg(const char* name, char opt)
 {
 	SERDI_ERRORF("option requires an argument -- '%c'\n", opt);
 	return print_usage(name, true);
+}
+
+static SerdStatus
+on_filter_event(void* handle, const SerdEvent* event)
+{
+	FilterPattern* pat = (FilterPattern*)handle;
+	if (event->type != SERD_STATEMENT) {
+		fprintf(stderr, "other thing\n");
+		return SERD_SUCCESS;
+	} else if (pat->s) {
+		fprintf(stderr, "err1\n");
+		return SERD_ERR_INVALID;
+	}
+
+	const SerdStatement* const statement = event->statement.statement;
+	pat->s = serd_node_copy(serd_statement_subject(statement));
+	pat->p = serd_node_copy(serd_statement_predicate(statement));
+	pat->o = serd_node_copy(serd_statement_object(statement));
+	pat->g = serd_node_copy(serd_statement_graph(statement));
+
+	return SERD_SUCCESS;
+}
+
+static SerdSink*
+parse_filter(SerdWorld* world, const SerdSink* sink, const char* str)
+{
+	FilterPattern pat     = {NULL, NULL, NULL, NULL};
+	SerdSink*     in_sink = serd_sink_new(&pat, NULL);
+	SerdReader*   reader =
+	    serd_reader_new(world, SERD_NQUADS, SERD_READ_VARIABLES, in_sink, 4096);
+
+	serd_sink_set_event_func(in_sink, on_filter_event);
+	SerdStatus st = serd_reader_start_string(reader, str, NULL);
+	if (!st) {
+		st = serd_reader_read_document(reader);
+	}
+
+	serd_reader_free(reader);
+	serd_sink_free(in_sink);
+
+	if (st) {
+		return NULL;
+	}
+
+	SerdSink* filter = serd_filter_new(sink, pat.s, pat.p, pat.o, pat.g);
+	serd_node_free(pat.s);
+	serd_node_free(pat.p);
+	serd_node_free(pat.o);
+	serd_node_free(pat.g);
+	return filter;
 }
 
 static SerdStatus
@@ -146,6 +204,7 @@ main(int argc, char** argv)
 	bool            quiet         = false;
 	size_t          stack_size    = 4194304;
 	const char*     input_string  = NULL;
+	const char*     pattern       = NULL;
 	const char*     add_prefix    = "";
 	const char*     chop_prefix   = NULL;
 	const char*     root_uri      = NULL;
@@ -177,6 +236,11 @@ main(int argc, char** argv)
 			use_model = true;
 		} else if (argv[a][1] == 'n') {
 			normalise = true;
+		} else if (argv[a][1] == 'g') {
+			if (++a == argc) {
+				return missing_arg(argv[0], 'g');
+			}
+			pattern = argv[a];
 		} else if (argv[a][1] == 'q') {
 			quiet = true;
 		} else if (argv[a][1] == 'v') {
@@ -303,6 +367,12 @@ main(int argc, char** argv)
 		sink = normaliser = serd_normaliser_new(out_sink, env);
 	}
 
+	SerdSink* filter = NULL;
+	if (pattern) {
+		filter = parse_filter(world, sink, pattern);
+		sink   = filter;
+	}
+
 	if (quiet) {
 		serd_world_set_log_func(world, serd_quiet_error_func, NULL);
 	}
@@ -312,8 +382,7 @@ main(int argc, char** argv)
 	serd_writer_chop_blank_prefix(writer, chop_prefix);
 	serd_node_free(root);
 
-	SerdStatus st         = SERD_SUCCESS;
-	SerdNode*  input_name = NULL;
+	SerdStatus st = SERD_SUCCESS;
 	if (input_string) {
 		SerdReader* const reader =
 		    serd_reader_new(world,
@@ -378,10 +447,10 @@ main(int argc, char** argv)
 	}
 
 	serd_sink_free(normaliser);
+	serd_sink_free(filter);
 	serd_sink_free(inserter);
 	serd_model_free(model);
 	serd_writer_free(writer);
-	serd_node_free(input_name);
 	serd_byte_sink_free(byte_sink);
 	serd_env_free(env);
 	serd_node_free(base);

@@ -1315,6 +1315,22 @@ serd_normaliser_new(const SerdSink* SERD_NONNULL target,
                     const SerdEnv* SERD_NONNULL  env);
 
 /**
+   Return a sink that filters out statements that do not match a pattern.
+
+   The returned sink acts like `target` in all respects, except statements that
+   do not match the pattern are dropped.  Only statements where each node is
+   either equivalent to the corresponding pattern node, or the pattern node is
+   null, will be passed through to the target sink.
+*/
+SERD_API
+SerdSink* SERD_ALLOCATED
+serd_filter_new(const SerdSink* SERD_NONNULL  target,
+                const SerdNode* SERD_NULLABLE subject,
+                const SerdNode* SERD_NULLABLE predicate,
+                const SerdNode* SERD_NULLABLE object,
+                const SerdNode* SERD_NULLABLE graph);
+
+/**
    @}
    @name Reader
    @{
