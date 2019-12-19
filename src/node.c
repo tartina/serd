@@ -157,7 +157,8 @@ serd_new_simple_node(SerdNodeType type, const char* str, const size_t len)
 {
 	if (!str) {
 		return NULL;
-	} else if (type != SERD_BLANK && type != SERD_CURIE && type != SERD_URI) {
+	} else if (type != SERD_BLANK && type != SERD_CURIE && type != SERD_URI &&
+	           type != SERD_VARIABLE) {
 		return NULL;
 	}
 

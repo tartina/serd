@@ -54,6 +54,7 @@ struct SerdReaderImpl {
 	SerdByteSource    source;
 	SerdStack         stack;
 	SerdSyntax        syntax;
+	SerdReaderFlags   flags;
 	unsigned          next_id;
 	uint8_t*          buf;
 	char*             bprefix;

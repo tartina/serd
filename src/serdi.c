@@ -74,6 +74,7 @@ print_usage(const char* name, bool error)
 	fprintf(os, "  -s INPUT     Parse INPUT as string.\n");
 	fprintf(os, "  -t           Write terser output without newlines.\n");
 	fprintf(os, "  -v           Display version information and exit.\n");
+	fprintf(os, "  -x           Support parsing variable nodes like `?x'.\n");
 	return error ? 1 : 0;
 }
 
@@ -230,6 +231,8 @@ main(int argc, char** argv)
 				return missing_arg(argv[0], 'r');
 			}
 			root_uri = argv[a];
+		} else if (argv[a][1] == 'x') {
+			reader_flags |= SERD_READ_VARIABLES;
 		} else {
 			SERDI_ERRORF("invalid option -- '%s'\n", argv[a] + 1);
 			return print_usage(argv[0], true);
