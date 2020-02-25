@@ -340,7 +340,11 @@ read_STRING_LITERAL_LONG(SerdReader* reader, SerdNode* ref, uint8_t q)
 		}
 	}
 
-	return (st && reader->strict) ? st : SERD_SUCCESS;
+	if (st && reader->strict) {
+		r_err(reader, st, "failed to read literal (%s)\n", serd_strerror(st));
+	}
+
+	return (st && reader->strict) ? SERD_ERR_BAD_SYNTAX : st;
 }
 
 // STRING_LITERAL_QUOTE and STRING_LITERAL_SINGLE_QUOTE
@@ -376,6 +380,10 @@ read_STRING_LITERAL(SerdReader* reader, SerdNode* ref, uint8_t q)
 					reader, ref, (uint8_t)eat_byte_safe(reader, c));
 			}
 		}
+	}
+
+	if (st && reader->strict) {
+		r_err(reader, st, "failed to read literal (%s)\n", serd_strerror(st));
 	}
 
 	return st;
