@@ -74,6 +74,25 @@ on_end(void* handle, const SerdNode* node)
 	return state->return_status;
 }
 
+static SerdStatus
+on_event(void* handle, const SerdEvent* event)
+{
+	switch (event->type) {
+	case SERD_BASE:
+		return on_base(handle, event->base.uri);
+	case SERD_PREFIX:
+		return on_prefix(handle, event->prefix.name, event->prefix.uri);
+	case SERD_STATEMENT:
+		return on_statement(handle,
+		                    event->statement.flags,
+		                    event->statement.statement);
+	case SERD_END:
+		return on_end(handle, event->end.node);
+	}
+
+	return SERD_SUCCESS;
+}
+
 int
 main(void)
 {
@@ -99,22 +118,20 @@ main(void)
 	assert(!serd_sink_write(sink, 0, base, uri, blank, NULL));
 	assert(!serd_sink_write_end(sink, blank));
 
-	// Set functions and try again
+	// Set event handler and try again
 
-	serd_sink_set_base_func(sink, on_base);
+	serd_sink_set_event_func(sink, on_event);
+
 	assert(!serd_sink_write_base(sink, base));
 	assert(serd_node_equals(state.last_base, base));
 
-	serd_sink_set_prefix_func(sink, on_prefix);
 	assert(!serd_sink_write_prefix(sink, name, uri));
 	assert(serd_node_equals(state.last_name, name));
 	assert(serd_node_equals(state.last_namespace, uri));
 
-	serd_sink_set_statement_func(sink, on_statement);
 	assert(!serd_sink_write_statement(sink, 0, statement));
 	assert(serd_statement_equals(state.last_statement, statement));
 
-	serd_sink_set_end_func(sink, on_end);
 	assert(!serd_sink_write_end(sink, blank));
 	assert(serd_node_equals(state.last_end, blank));
 

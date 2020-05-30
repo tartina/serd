@@ -22,12 +22,12 @@
 #include <string.h>
 
 static SerdStatus
-count_prefixes(void* handle, const SerdNode* name, const SerdNode* uri)
+count_prefixes(void* handle, const SerdEvent* event)
 {
-	(void)name;
-	(void)uri;
+	if (event->type == SERD_PREFIX) {
+		++*(int*)handle;
+	}
 
-	++*(int*)handle;
 	return SERD_SUCCESS;
 }
 
@@ -85,7 +85,7 @@ test_env(void)
 
 	size_t    n_prefixes          = 0;
 	SerdSink* count_prefixes_sink = serd_sink_new(&n_prefixes, NULL);
-	serd_sink_set_prefix_func(count_prefixes_sink, count_prefixes);
+	serd_sink_set_event_func(count_prefixes_sink, count_prefixes);
 	serd_env_set_prefix(env, pre, eg);
 	serd_env_write_prefixes(env, count_prefixes_sink);
 	serd_sink_free(count_prefixes_sink);

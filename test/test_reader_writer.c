@@ -25,14 +25,12 @@
 #include <string.h>
 
 static SerdStatus
-count_statements(void*                handle,
-                 SerdStatementFlags   flags,
-                 const SerdStatement* statement)
+count_statements(void* handle, const SerdEvent* event)
 {
-	(void)flags;
-	(void)statement;
+	if (event->type == SERD_STATEMENT) {
+		++*(size_t*)handle;
+	}
 
-	++*(size_t*)handle;
 	return SERD_SUCCESS;
 }
 
@@ -73,7 +71,7 @@ test_read_chunks(void)
 	SerdSink*         sink         = serd_sink_new(&n_statements, NULL);
 
 	assert(sink);
-	serd_sink_set_statement_func(sink, count_statements);
+	serd_sink_set_event_func(sink, count_statements);
 
 	SerdReader* reader = serd_reader_new(world, SERD_TURTLE, 0, sink, 4096);
 	assert(reader);
@@ -193,7 +191,7 @@ test_read_string(void)
 	SerdReader* reader = serd_reader_new(world, SERD_TURTLE, 0, sink, 4096);
 	assert(reader);
 
-	serd_sink_set_statement_func(sink, count_statements);
+	serd_sink_set_event_func(sink, count_statements);
 
 	// Test reading a string that ends exactly at the end of input (no newline)
 	assert(!serd_reader_start_string(
@@ -330,7 +328,7 @@ test_reader(const char* path)
 
 	size_t    n_statements = 0;
 	SerdSink* sink         = serd_sink_new(&n_statements, NULL);
-	serd_sink_set_statement_func(sink, count_statements);
+	serd_sink_set_event_func(sink, count_statements);
 
 	SerdReader* reader = serd_reader_new(world, SERD_TURTLE, 0, sink, 4096);
 	assert(reader);

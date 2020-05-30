@@ -36,20 +36,6 @@ manage_or_intern(SerdNodes* nodes, SerdNode* manage, const SerdNode* intern)
 }
 
 static SerdStatus
-serd_inserter_on_base(SerdInserterData* data, const SerdNode* uri)
-{
-	return serd_env_set_base_uri(data->env, uri);
-}
-
-static SerdStatus
-serd_inserter_on_prefix(SerdInserterData* data,
-                        const SerdNode*   name,
-                        const SerdNode*   uri)
-{
-	return serd_env_set_prefix(data->env, name, uri);
-}
-
-static SerdStatus
 serd_inserter_on_statement(SerdInserterData*        data,
                            const SerdStatementFlags flags,
                            const SerdStatement*     statement)
@@ -85,6 +71,27 @@ serd_inserter_on_statement(SerdInserterData*        data,
 	return st > SERD_FAILURE ? st : SERD_SUCCESS;
 }
 
+static SerdStatus
+serd_inserter_on_event(SerdInserterData* data, const SerdEvent* event)
+{
+	switch (event->type) {
+	case SERD_BASE:
+		return serd_env_set_base_uri(data->env, event->base.uri);
+	case SERD_PREFIX:
+		return serd_env_set_prefix(data->env,
+		                           event->prefix.name,
+		                           event->prefix.uri);
+	case SERD_STATEMENT:
+		return serd_inserter_on_statement(data,
+		                                  event->statement.flags,
+		                                  event->statement.statement);
+	case SERD_END:
+		break;
+	}
+
+	return SERD_SUCCESS;
+}
+
 static void
 free_data(void* handle)
 {
@@ -108,10 +115,7 @@ serd_inserter_new(SerdModel* model, SerdEnv* env, const SerdNode* default_graph)
 
 	SerdSink* const sink = serd_sink_new(data, free_data);
 
-	serd_sink_set_base_func(sink, (SerdBaseFunc)serd_inserter_on_base);
-	serd_sink_set_prefix_func(sink, (SerdPrefixFunc)serd_inserter_on_prefix);
-	serd_sink_set_statement_func(sink,
-	                             (SerdStatementFunc)serd_inserter_on_statement);
+	serd_sink_set_event_func(sink, (SerdEventFunc)serd_inserter_on_event);
 
 	return sink;
 }

@@ -1021,6 +1021,27 @@ serd_writer_end_anon(SerdWriter* writer, const SerdNode* node)
 	return st;
 }
 
+static SerdStatus
+serd_writer_on_event(SerdWriter* writer, const SerdEvent* event)
+{
+	switch (event->type) {
+	case SERD_BASE:
+		return serd_writer_set_base_uri(writer, event->base.uri);
+	case SERD_PREFIX:
+		return serd_writer_set_prefix(writer,
+		                              event->prefix.name,
+		                              event->prefix.uri);
+	case SERD_STATEMENT:
+		return serd_writer_write_statement(writer,
+		                                   event->statement.flags,
+		                                   event->statement.statement);
+	case SERD_END:
+		return serd_writer_end_anon(writer, event->end.node);
+	}
+
+	return SERD_SUCCESS;
+}
+
 SerdStatus
 serd_writer_finish(SerdWriter* writer)
 {
@@ -1067,11 +1088,8 @@ serd_writer_new(SerdWorld*      world,
 	writer->context      = context;
 	writer->empty        = true;
 
-	writer->iface.handle    = writer;
-	writer->iface.base      = (SerdBaseFunc)serd_writer_set_base_uri;
-	writer->iface.prefix    = (SerdPrefixFunc)serd_writer_set_prefix;
-	writer->iface.statement = (SerdStatementFunc)serd_writer_write_statement;
-	writer->iface.end       = (SerdEndFunc)serd_writer_end_anon;
+	writer->iface.handle   = writer;
+	writer->iface.on_event = (SerdEventFunc)serd_writer_on_event;
 
 	return writer;
 }
