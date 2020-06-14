@@ -57,7 +57,6 @@ def configure(conf):
     if Options.options.ultra_strict:
         autowaf.add_compiler_flags(conf.env, '*', {
             'clang': [
-                '-Wno-cast-align',
                 '-Wno-covered-switch-default',
                 '-Wno-float-equal',
                 '-Wno-format-nonliteral',
@@ -68,7 +67,6 @@ def configure(conf):
                 '-Wno-reserved-id-macro',
             ],
             'gcc': [
-                '-Wno-cast-align',
                 '-Wno-float-equal',
                 '-Wno-inline',
                 '-Wno-padded',
@@ -88,9 +86,11 @@ def configure(conf):
         autowaf.add_compiler_flags(conf.env, 'c', {
             'clang': [
                 '-Wno-bad-function-cast',
+                '-Wno-cast-align',
             ],
             'gcc': [
                 '-Wno-bad-function-cast',
+                '-Wno-cast-align',
             ],
             'msvc': [
                 '/wd4706',  # assignment within conditional expression
