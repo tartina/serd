@@ -1143,7 +1143,7 @@ serd_env_free(SerdEnv* SERD_NULLABLE env);
 /// Get the current base URI
 SERD_PURE_API
 const SerdNode* SERD_NULLABLE
-serd_env_base_uri(const SerdEnv* SERD_NONNULL env);
+serd_env_base_uri(const SerdEnv* SERD_NULLABLE env);
 
 /// Set the current base URI
 SERD_API
@@ -1179,7 +1179,7 @@ serd_env_set_prefix_from_strings(SerdEnv* SERD_NONNULL    env,
 */
 SERD_API
 SerdNode* SERD_ALLOCATED
-serd_env_qualify(const SerdEnv* SERD_NONNULL  env,
+serd_env_qualify(const SerdEnv* SERD_NULLABLE env,
                  const SerdNode* SERD_NONNULL uri);
 
 /**
@@ -1193,7 +1193,7 @@ serd_env_qualify(const SerdEnv* SERD_NONNULL  env,
 */
 SERD_API
 SerdNode* SERD_ALLOCATED
-serd_env_expand(const SerdEnv* SERD_NONNULL   env,
+serd_env_expand(const SerdEnv* SERD_NULLABLE  env,
                 const SerdNode* SERD_NULLABLE node);
 
 /// Write all prefixes in `env` to `sink`
