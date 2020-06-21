@@ -29,10 +29,12 @@ post_tags    = ['Hacking', 'RDF', 'Serd']
 def options(ctx):
     ctx.load('compiler_c')
     ctx.load('compiler_cxx')
+    ctx.load('python')
     opt = ctx.configuration_options()
     ctx.add_flags(
         opt,
         {'no-utils':     'do not build command line utilities',
+         'no-python':    'do not build Python bindings',
          'no-cxx':       'do not build C++ bindings',
          'stack-check':  'include runtime stack sanity checks',
          'static':       'build static library',
@@ -45,6 +47,16 @@ def options(ctx):
 
 def configure(conf):
     conf.load('compiler_c', cache=True)
+
+    if not Options.options.no_python:
+        try:
+            conf.load('python', cache=True)
+            conf.check_python_version((3, 4, 0))
+            conf.check_python_headers()
+            conf.load('cython')
+            conf.env.SERD_PYTHON = 1
+        except Exception as e:
+            Logs.warn('Failed to configure Python (%s)\n' % e)
 
     if not Options.options.no_cxx:
         conf.load('compiler_cxx', cache=True)
@@ -219,7 +231,8 @@ def configure(conf):
         {'Build static library': bool(conf.env['BUILD_STATIC']),
          'Build shared library': bool(conf.env['BUILD_SHARED']),
          'Build utilities':      bool(conf.env['BUILD_UTILS']),
-         'Build unit tests':     bool(conf.env['BUILD_TESTS'])})
+         'Build unit tests':     bool(conf.env['BUILD_TESTS']),
+         'Python bindings':      bool(conf.env['SERD_PYTHON'])})
 
 
 lib_headers = ['src/reader.h']
@@ -315,6 +328,41 @@ def build(bld):
             defines         = defines + ['SERD_INTERNAL'],
             **lib_args)
 
+    # Python bindings
+    if bld.env.SERD_PYTHON:
+        cflags = [f for f in bld.env.CFLAGS if not f.startswith('-W')]
+        linkflags = [f for f in bld.env.LINKFLAGS if f != '-Wl,--no-undefined']
+
+        cython_env = bld.env.derive()
+        cython_env.append_unique('CYTHONFLAGS', ['-Wextra', '-Werror'])
+        cython_env['CFLAGS'] = cflags
+        cython_env['LINKFLAGS'] = linkflags
+
+        autowaf.add_compiler_flags(cython_env, 'c', {
+            'gcc': [
+                '-Wno-cast-align',
+                '-Wno-inline',
+                '-Wno-pedantic',
+                '-Wno-redundant-decls',
+                '-Wno-shadow',
+                '-Wno-sign-conversion',
+                '-Wno-suggest-attribute=format',
+                '-Wno-suggest-attribute=pure',
+                '-Wno-undef',
+            ],
+            'clang': [
+                '-Wno-deprecated-declarations',
+            ]
+        })
+
+        bld(features     = 'c cshlib pyext',
+            source       = 'bindings/python/serd.pyx',
+            target       = 'bindings/python/serd',
+            includes     = '.',
+            use          = 'libserd',
+            install_path = '${PYTHONDIR}',
+            env          = cython_env)
+
     if bld.env.BUILD_TESTS:
         coverage_flags = [''] if bld.env.NO_COVERAGE else ['--coverage']
         test_args = {'includes':     ['.', 'include', './src'],
@@ -373,6 +421,15 @@ def build(bld):
                 target       = 'test_serd_cxx',
                 defines      = defines,
                 **cxx_test_args)
+
+        # Python API test
+        if bld.env.SERD_PYTHON:
+            # Copy test to build directory
+            bld(features     = 'subst',
+                is_copy      = True,
+                source       = 'bindings/python/test_serd.py',
+                target       = 'bindings/python/test_serd.py',
+                install_path = None)
 
     # Utilities
     if bld.env.BUILD_UTILS:
@@ -433,7 +490,8 @@ def lint(ctx):
 
     if "IWYU_TOOL" in ctx.env:
         Logs.info("Running include-what-you-use")
-        cmd = [ctx.env.IWYU_TOOL[0], "-o", "clang", "-p", "build"]
+        cmd = [ctx.env.IWYU_TOOL[0], "-o", "clang", "-p", "build",
+               "src", "test", "bindings/cxx/test"]
         output = subprocess.check_output(cmd).decode('utf-8')
         if 'error: ' in output:
             sys.stdout.write(output)
@@ -800,6 +858,11 @@ def test(tst):
             pass
 
     srcdir = tst.path.abspath()
+
+    if tst.env.SERD_PYTHON:
+        with tst.group('python') as check:
+            check([tst.env.PYTHON[0], '-m', 'unittest',
+                   'discover', 'bindings/python'])
 
     with tst.group('Unit') as check:
         check(['./test_base64'])
