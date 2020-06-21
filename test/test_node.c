@@ -115,7 +115,7 @@ test_node_equals(void)
 }
 
 static void
-test_node_from_string(void)
+test_node_from_syntax(void)
 {
 	SerdNode* hello = serd_new_string("hello\"");
 	assert(serd_node_length(hello) == 6);
@@ -206,7 +206,7 @@ main(void)
 	test_blob_to_node();
 	test_boolean();
 	test_node_equals();
-	test_node_from_string();
+	test_node_from_syntax();
 	test_node_from_substring();
 	test_simple_node();
 	test_literal();

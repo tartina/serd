@@ -205,6 +205,7 @@ lib_source = ['src/base64.c',
               'src/model.c',
               'src/n3.c',
               'src/node.c',
+              'src/node_syntax.c',
               'src/nodes.c',
               'src/normalise.c',
               'src/range.c',
@@ -294,6 +295,7 @@ def build(bld):
                      ('test_int_math', 'test/test_int_math.c'),
                      ('test_model', 'test/test_model.c'),
                      ('test_node', 'test/test_node.c'),
+                     ('test_node_syntax', 'test/test_node_syntax.c'),
                      ('test_nodes', 'test/test_nodes.c'),
                      ('test_overflow', 'test/test_overflow.c'),
                      ('test_read_chunk', 'test/test_read_chunk.c'),
@@ -746,6 +748,7 @@ def test(tst):
         check(['./test_int_math'])
         check(['./test_model'])
         check(['./test_node'])
+        check(['./test_node_syntax'])
         check(['./test_nodes'])
         check(['./test_overflow'])
         check(['./test_read_chunk'])
