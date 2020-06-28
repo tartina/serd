@@ -662,8 +662,7 @@ def test_suite(ctx,
                 if expected_return == 0:
                     # Run model test for positive test (must succeed)
                     out_path = action + '.model.out'
-                    check([command[0]] + ['-m'] + command[1:],
-                          stdout=out_path,
+                    check([command[0]] + ['-w', out_path, '-m'] + command[1:],
                           name=action + ' model')
 
                     if result and ((mf + 'result') in model[test]):
@@ -763,8 +762,9 @@ def test(tst):
         out_path = in_path + '.io'
         check_path = '%s/test/good/%s' % (srcdir, check_name)
 
-        check([serdi, '-o', lang, '-I', in_path, '%s/%s' % (srcdir, in_path)],
-              stdout=out_path, name=in_name)
+        check([serdi, '-o', lang, '-I', in_path, '-w', out_path,
+               '%s/%s' % (srcdir, in_path)],
+              name=in_name)
 
         check.file_equals(check_path, out_path)
 
@@ -791,8 +791,8 @@ def test(tst):
 
     with tst.group('MultiFile') as check:
         path = '%s/test/multifile' % srcdir
-        check([serdi, '%s/input1.ttl' % path, '%s/input2.trig' % path],
-              stdout='test/multifile/output.out.nq')
+        check([serdi, '-w', 'test/multifile/output.out.nq',
+               '%s/input1.ttl' % path, '%s/input2.trig' % path])
         check.file_equals('%s/test/multifile/output.nq' % srcdir,
                           'test/multifile/output.out.nq')
 
@@ -842,6 +842,10 @@ def test(tst):
                   stdout='/dev/full', name='Write error')
             check([serdi, 'file://%s/test/good/manifest.ttl' % srcdir],
                   stdout='/dev/full', name='Long write error')
+        if os.path.exists('/proc/cpuinfo'):
+            check([serdi, '-w', '/proc/cpuinfo',
+                   'file://%s/test/good/base.ttl' % srcdir],
+                  name='Read-only write error')
 
     if sys.version_info.major >= 3:
         from waflib.extras import autoship

@@ -723,10 +723,11 @@ test_write_bad_list(SerdWorld* world, const unsigned n_quads)
 	serd_model_add(model, list2, prest, norest, NULL);
 	serd_model_add(model, norest, pfirst, val2, NULL);
 
-	SerdBuffer  buffer = {NULL, 0};
-	SerdEnv*    env    = serd_env_new(NULL);
-	SerdWriter* writer = serd_writer_new(
-	        world, SERD_TURTLE, 0, env, serd_buffer_sink, &buffer);
+	SerdBuffer    buffer    = {NULL, 0};
+	SerdEnv*      env       = serd_env_new(NULL);
+	SerdByteSink* byte_sink = serd_byte_sink_new_buffer(&buffer);
+
+	SerdWriter* writer = serd_writer_new(world, SERD_TURTLE, 0, env, byte_sink);
 
 	SerdRange* all = serd_model_all(model);
 	serd_range_serialise(all, serd_writer_sink(writer), 0);
@@ -746,6 +747,7 @@ test_write_bad_list(SerdWorld* world, const unsigned n_quads)
 
 	free(buffer.buf);
 	serd_writer_free(writer);
+	serd_byte_sink_free(byte_sink);
 	serd_model_free(model);
 	serd_env_free(env);
 	serd_nodes_free(nodes);
@@ -798,9 +800,13 @@ test_write_error_in_list(SerdWorld* world, const unsigned n_quads)
 	SerdEnv* env = serd_env_new(NULL);
 
 	for (size_t max_successes = 0; max_successes < 21; ++max_successes) {
-		FailingWriteFuncState state  = {0, max_successes};
-		SerdWriter*           writer = serd_writer_new(
-                world, SERD_TURTLE, 0, env, failing_write_func, &state);
+		FailingWriteFuncState state = {0, max_successes};
+
+		SerdByteSink* byte_sink =
+		    serd_byte_sink_new_function(failing_write_func, &state, 1);
+
+		SerdWriter* writer =
+		    serd_writer_new(world, SERD_TURTLE, 0, env, byte_sink);
 
 		const SerdSink* const sink = serd_writer_sink(writer);
 		SerdRange* const      all  = serd_model_all(model);
@@ -810,6 +816,7 @@ test_write_error_in_list(SerdWorld* world, const unsigned n_quads)
 		assert(st == SERD_ERR_BAD_WRITE);
 
 		serd_writer_free(writer);
+		serd_byte_sink_free(byte_sink);
 	}
 
 	serd_env_free(env);
