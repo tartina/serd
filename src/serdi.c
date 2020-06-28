@@ -313,6 +313,9 @@ main(int argc, char** argv)
 	_setmode(_fileno(stdout), _O_BINARY);
 #endif
 
+	char* const* const inputs   = argv + a;
+	const int          n_inputs = argc - a;
+
 	bool input_has_graphs = serd_syntax_has_graphs(input_syntax);
 	for (int i = a; i < argc; ++i) {
 		if (serd_syntax_has_graphs(serd_guess_syntax(argv[i]))) {
@@ -323,6 +326,15 @@ main(int argc, char** argv)
 
 	if (!output_syntax && !osyntax_set) {
 		output_syntax = input_has_graphs ? SERD_NQUADS : SERD_NTRIPLES;
+	}
+
+	if (!base && n_inputs == 1 &&
+	    (output_syntax == SERD_NQUADS || output_syntax == SERD_NTRIPLES)) {
+		// Choose base URI from the single input path
+		if (!(base = serd_new_real_file_uri(inputs[0], NULL))) {
+			SERDI_ERRORF("unable to determine base URI from path %s\n",
+			             inputs[0]);
+		}
 	}
 
 	FILE* const      out_fd = stdout;
@@ -400,8 +412,6 @@ main(int argc, char** argv)
 		serd_reader_free(reader);
 	}
 
-	char** inputs     = argv + a;
-	int    n_inputs   = argc - a;
 	size_t prefix_len = 0;
 	char*  prefix     = NULL;
 	if (n_inputs > 1) {
