@@ -38,7 +38,7 @@ r_err(SerdReader* reader, SerdStatus st, const char* fmt, ...)
 	serd_world_vlogf_internal(reader->world,
 	                          st,
 	                          SERD_LOG_LEVEL_ERR,
-	                          &reader->source.cur,
+	                          &reader->source->cur,
 	                          fmt,
 	                          args);
 	va_end(args);
@@ -126,7 +126,7 @@ emit_statement(SerdReader* reader, ReadContext ctx, SerdNode* o)
 
 	const SerdStatement statement = {
 		{ ctx.subject, ctx.predicate, o, ctx.graph },
-		&reader->source.cur
+		&reader->source->cur
 	};
 
 	const SerdStatus st =
@@ -145,7 +145,11 @@ read_statement(SerdReader* reader)
 SerdStatus
 serd_reader_read_document(SerdReader* reader)
 {
-	if (!reader->source.prepared) {
+	if (!reader->source) {
+		return SERD_ERR_BAD_CALL;
+	}
+
+	if (!reader->source->prepared) {
 		SerdStatus st = serd_reader_prepare(reader);
 		if (st) {
 			return st;
@@ -226,12 +230,12 @@ serd_reader_add_blank_prefix(SerdReader* reader, const char* prefix)
 static SerdStatus
 skip_bom(SerdReader* me)
 {
-	if (serd_byte_source_peek(&me->source) == 0xEF) {
-		serd_byte_source_advance(&me->source);
-		if (serd_byte_source_peek(&me->source) != 0xBB ||
-		    serd_byte_source_advance(&me->source) ||
-		    serd_byte_source_peek(&me->source) != 0xBF ||
-		    serd_byte_source_advance(&me->source)) {
+	if (serd_byte_source_peek(me->source) == 0xEF) {
+		serd_byte_source_advance(me->source);
+		if (serd_byte_source_peek(me->source) != 0xBB ||
+		    serd_byte_source_advance(me->source) ||
+		    serd_byte_source_peek(me->source) != 0xBF ||
+		    serd_byte_source_advance(me->source)) {
 			r_err(me, SERD_ERR_BAD_SYNTAX, "corrupt byte order mark\n");
 			return SERD_ERR_BAD_SYNTAX;
 		}
@@ -241,64 +245,23 @@ skip_bom(SerdReader* me)
 }
 
 SerdStatus
-serd_reader_start_stream(SerdReader*         reader,
-                         SerdReadFunc        read_func,
-                         SerdStreamErrorFunc error_func,
-                         void*               stream,
-                         const SerdNode*     name,
-                         size_t              page_size)
-{
-	serd_reader_finish(reader);
-	return serd_byte_source_open_source(
-		&reader->source, read_func, error_func, NULL, stream, name, page_size);
-}
-
-SerdStatus
-serd_reader_start_file(SerdReader* reader, const char* uri, bool bulk)
+serd_reader_start(SerdReader* reader, SerdByteSource* byte_source)
 {
 	serd_reader_finish(reader);
 
-	char* const path = serd_file_uri_parse(uri, NULL);
-	if (!path) {
-		return SERD_ERR_BAD_ARG;
-	}
+	reader->source = byte_source;
 
-	FILE* fd = serd_world_fopen(reader->world, path, "rb");
-	free(path);
-	if (!fd) {
-		return SERD_ERR_UNKNOWN;
-	}
-
-	SerdNode* const name = serd_new_uri(uri);
-	const SerdStatus st = serd_byte_source_open_source(
-		&reader->source,
-		bulk ? (SerdReadFunc)fread : serd_file_read_byte,
-		(SerdStreamErrorFunc)ferror,
-		(SerdStreamCloseFunc)fclose,
-		fd,
-		name,
-		bulk ? SERD_PAGE_SIZE : 1u);
-	serd_node_free(name);
-	return st;
-}
-
-SerdStatus
-serd_reader_start_string(SerdReader*     reader,
-                         const char*     utf8,
-                         const SerdNode* name)
-{
-	serd_reader_finish(reader);
-	return serd_byte_source_open_string(&reader->source, utf8, name);
+	return reader->source ? SERD_SUCCESS : SERD_ERR_BAD_ARG;
 }
 
 static SerdStatus
 serd_reader_prepare(SerdReader* reader)
 {
-	SerdStatus st = serd_byte_source_prepare(&reader->source);
+	SerdStatus st = serd_byte_source_prepare(reader->source);
 	if (st == SERD_SUCCESS) {
 		st = skip_bom(reader);
 	} else if (st == SERD_FAILURE) {
-		reader->source.eof = true;
+		reader->source->eof = true;
 	} else {
 		r_err(reader, st, "error preparing read: %s\n", strerror(errno));
 	}
@@ -309,10 +272,12 @@ SerdStatus
 serd_reader_read_chunk(SerdReader* reader)
 {
 	SerdStatus st = SERD_SUCCESS;
-	if (!reader->source.prepared) {
+	if (!reader->source) {
+		return SERD_ERR_BAD_CALL;
+	} else if (!reader->source->prepared) {
 		st = serd_reader_prepare(reader);
-	} else if (reader->source.eof) {
-		st = serd_byte_source_advance(&reader->source);
+	} else if (reader->source->eof) {
+		st = serd_byte_source_advance(reader->source);
 	}
 
 	if (peek_byte(reader) == 0) {
@@ -326,5 +291,6 @@ serd_reader_read_chunk(SerdReader* reader)
 SerdStatus
 serd_reader_finish(SerdReader* reader)
 {
-	return serd_byte_source_close(&reader->source);
+	reader->source = NULL;
+	return SERD_SUCCESS;
 }

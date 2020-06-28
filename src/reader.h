@@ -51,7 +51,7 @@ struct SerdReaderImpl {
 	SerdNode*         rdf_first;
 	SerdNode*         rdf_rest;
 	SerdNode*         rdf_nil;
-	SerdByteSource    source;
+	SerdByteSource*   source;
 	SerdStack         stack;
 	SerdSyntax        syntax;
 	SerdReaderFlags   flags;
@@ -98,7 +98,7 @@ SerdStatus read_turtleTrigDoc(SerdReader* reader);
 static inline int
 peek_byte(SerdReader* reader)
 {
-	SerdByteSource* source = &reader->source;
+	SerdByteSource* source = reader->source;
 
 	return source->eof ? EOF : (int)source->read_buf[source->read_head];
 }
@@ -111,7 +111,7 @@ eat_byte_safe(SerdReader* reader, const int byte)
 	const int c = peek_byte(reader);
 	assert(c == byte);
 
-	serd_byte_source_advance(&reader->source);
+	serd_byte_source_advance(reader->source);
 	return c;
 }
 

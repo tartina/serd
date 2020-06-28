@@ -96,20 +96,22 @@ main(void)
 	SerdSink*  sink  = serd_sink_new(NULL, NULL);
 	serd_sink_set_event_func(sink, on_event);
 
+	SerdByteSource* byte_source =
+	    serd_byte_source_new_string("@prefix eg: <http://example.org/> .\n"
+	                                "@base <http://example.org/base> .\n"
+	                                "eg:s1 eg:p1 eg:o1 ;\n"
+	                                "      eg:p2 eg:o2 ,\n"
+	                                "            eg:o3 .\n"
+	                                "eg:s2 eg:p1 eg:o1 ;\n"
+	                                "      eg:p2 eg:o2 .\n"
+	                                "eg:s3 eg:p1 eg:o1 .\n"
+	                                "eg:s4 eg:p1 [ eg:p3 eg:o1 ] .\n",
+	                                NULL);
+
 	SerdReader* reader = serd_reader_new(world, SERD_TURTLE, 0, sink, 4096);
 	assert(reader);
 
-	assert(!serd_reader_start_string(reader,
-	                                 "@prefix eg: <http://example.org/> .\n"
-	                                 "@base <http://example.org/base> .\n"
-	                                 "eg:s1 eg:p1 eg:o1 ;\n"
-	                                 "      eg:p2 eg:o2 ,\n"
-	                                 "            eg:o3 .\n"
-	                                 "eg:s2 eg:p1 eg:o1 ;\n"
-	                                 "      eg:p2 eg:o2 .\n"
-	                                 "eg:s3 eg:p1 eg:o1 .\n"
-	                                 "eg:s4 eg:p1 [ eg:p3 eg:o1 ] .\n",
-	                                 NULL));
+	assert(!serd_reader_start(reader, byte_source));
 
 	assert(!serd_reader_read_chunk(reader) && n_prefix == 1);
 	assert(!serd_reader_read_chunk(reader) && n_base == 1);
@@ -123,6 +125,7 @@ main(void)
 	assert(!serd_reader_finish(reader));
 
 	serd_reader_free(reader);
+	serd_byte_source_free(byte_source);
 	serd_sink_free(sink);
 	serd_world_free(world);
 

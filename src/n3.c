@@ -909,7 +909,7 @@ read_Var(SerdReader* reader, SerdNode** dest)
 	}
 
 	assert(peek_byte(reader) == '$' || peek_byte(reader) == '?');
-	serd_byte_source_advance(&reader->source);
+	serd_byte_source_advance(reader->source);
 
 	return read_VARNAME(reader, dest);
 }
@@ -1587,11 +1587,11 @@ skip_until(SerdReader* reader, uint8_t byte)
 SerdStatus
 read_turtleTrigDoc(SerdReader* reader)
 {
-	while (!reader->source.eof) {
+	while (!reader->source->eof) {
 		const size_t     orig_stack_size = reader->stack.size;
 		const SerdStatus st              = read_n3_statement(reader);
 		if (st > SERD_FAILURE) {
-			if (reader->strict || reader->source.eof ||
+			if (reader->strict || reader->source->eof ||
 			    st == SERD_ERR_OVERFLOW) {
 				serd_stack_pop_to(&reader->stack, orig_stack_size);
 				return st;
@@ -1607,7 +1607,7 @@ SerdStatus
 read_nquadsDoc(SerdReader* reader)
 {
 	SerdStatus st = SERD_SUCCESS;
-	while (!st && !reader->source.eof) {
+	while (!st && !reader->source->eof) {
 		const size_t orig_stack_size = reader->stack.size;
 
 		SerdStatementFlags flags   = 0;

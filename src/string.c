@@ -55,6 +55,7 @@ serd_strerror(SerdStatus status)
 	case SERD_ERR_INVALID:    return "Invalid data";
 	case SERD_ERR_NO_DATA:    return "Unexpectd end of input";
 	case SERD_ERR_BAD_WRITE:  return "Error writing to file";
+	case SERD_ERR_BAD_CALL:   return "Invalid call";
 	default:                  break;
 	}
 	return "Unknown error";  // never reached
