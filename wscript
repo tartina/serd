@@ -97,10 +97,12 @@ def configure(conf):
                 '/wd4200',  # nonstandard: zero-sized array in struct/union
                 '/wd4464',  # relative include path contains '..'
                 '/wd4514',  # unreferenced inline function has been removed
+                '/wd4706',  # assignment within conditional expression
                 '/wd4710',  # function not inlined
                 '/wd4711',  # function selected for automatic inline expansion
                 '/wd4820',  # padding added after construct
                 '/wd4996',  # POSIX name for this item is deprecated
+                '/wd5045',  # will insert Spectre mitigation for memory load
             ],
         })
 
@@ -149,6 +151,17 @@ def configure(conf):
                 '/wd5027',  # move assignment operator implicitly deleted
             ]
         })
+
+        if 'mingw' in conf.env.CC[0]:
+            conf.env.append_unique('CFLAGS', [
+                '-Wno-float-conversion',
+                '-Wno-format',
+                '-Wno-suggest-attribute=format'
+            ])
+
+            conf.env.append_unique('CXXFLAGS', [
+                '-Wno-suggest-attribute=format'
+            ])
 
     conf.env.update({
         'BUILD_UTILS': not Options.options.no_utils,
