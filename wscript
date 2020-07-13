@@ -63,6 +63,9 @@ def configure(conf):
 
     conf.load('autowaf', cache=True)
 
+    if conf.env.SERD_PYTHON and (conf.env.DOCS or conf.env.BUILD_TESTS):
+        conf.load('sphinx')
+
     if not autowaf.set_c_lang(conf, 'c11', mandatory=False):
         autowaf.set_c_lang(conf, 'c99')
 
@@ -472,6 +475,16 @@ def build(bld):
             name='index',
             SERD_VERSION=SERD_VERSION)
 
+    # Python Documentation
+    if bld.env.SERD_PYTHON and bld.env.DOCS:
+        if bld.env.SPHINX_BUILD:
+            bld.add_group('sphinx')
+            bld(features='sphinx',
+                sphinx_source='bindings/python',
+                sphinx_output_format='singlehtml')
+        else:
+            Logs.warn('Sphinx not found, not building Python documentation')
+
     # Man page
     bld.install_files('${MANDIR}/man1', 'doc/serdi.1')
 
@@ -876,6 +889,14 @@ def test(tst):
         with tst.group('python') as check:
             check([tst.env.PYTHON[0], '-m', 'unittest',
                    'discover', 'bindings/python'])
+
+        if tst.env.SPHINX_BUILD:
+            with tst.group('pythondoc') as check:
+                check([tst.env.SPHINX_BUILD[0], '-M', 'doctest',
+                       '../bindings/python',
+                       'build/singlehtml'])
+        else:
+            Logs.warn('Sphinx not found, not running doctests')
 
     with tst.group('Unit') as check:
         check(['./test_base64'])
