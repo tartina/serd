@@ -119,7 +119,7 @@ SerdStatus
 serd_env_set_base_uri(SerdEnv*        env,
                       const SerdNode* uri)
 {
-	if (!env || (uri && uri->type != SERD_URI)) {
+	if (uri && uri->type != SERD_URI) {
 		return SERD_ERR_BAD_ARG;
 	} else if (!uri) {
 		serd_node_free(env->base_uri_node);
@@ -187,11 +187,13 @@ serd_env_set_prefix(SerdEnv*        env,
                     const SerdNode* name,
                     const SerdNode* uri)
 {
-	if (!name || uri->type != SERD_URI) {
+	if (name->type != SERD_LITERAL || uri->type != SERD_URI) {
 		return SERD_ERR_BAD_ARG;
 	} else if (serd_uri_string_has_scheme(serd_node_string(uri))) {
 		// Set prefix to absolute URI
 		serd_env_add(env, name, uri);
+	} else if (!env->base_uri_node) {
+		return SERD_ERR_BAD_ARG;
 	} else {
 		// Resolve relative URI and create a new node and URI for it
 		SerdNode* abs_uri =
