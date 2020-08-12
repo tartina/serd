@@ -302,23 +302,33 @@ expand_literal(const SerdEnv* env, const SerdNode* node)
 	assert(serd_node_type(node) == SERD_LITERAL);
 
 	const SerdNode* const datatype = serd_node_datatype(node);
-	if (datatype && serd_node_type(datatype) == SERD_CURIE) {
+	if (!datatype) {
+		return serd_node_copy(node);
+	}
+
+	if (serd_node_type(datatype) == SERD_CURIE) {
 		SerdStringView prefix;
 		SerdStringView suffix;
-		if (!serd_env_expand_in_place(env, datatype, &prefix, &suffix)) {
-			return serd_new_typed_literal_expanded(serd_node_string(node),
-			                                       serd_node_length(node),
-			                                       serd_node_flags(node),
-			                                       SERD_URI,
-			                                       prefix,
-			                                       suffix);
+		if (serd_env_expand_in_place(env, datatype, &prefix, &suffix)) {
+			return NULL;
 		}
-	} else if (datatype && serd_node_type(datatype) == SERD_URI) {
+
+		return serd_new_typed_literal_expanded(serd_node_string(node),
+		                                       serd_node_length(node),
+		                                       serd_node_flags(node),
+		                                       SERD_URI,
+		                                       prefix,
+		                                       suffix);
+
+	} else if (serd_node_type(datatype) == SERD_URI) {
 		SerdURI datatype_uri;
 		serd_uri_parse(serd_node_string(datatype), &datatype_uri);
 
 		SerdURI abs_datatype_uri;
 		serd_uri_resolve(&datatype_uri, &env->base_uri, &abs_datatype_uri);
+		if (abs_datatype_uri.scheme.len == 0) {
+			return NULL;
+		}
 
 		return serd_new_typed_literal_uri(serd_node_string(node),
 		                                  serd_node_length(node),
@@ -368,7 +378,7 @@ serd_env_expand(const SerdEnv* env, const SerdNode* node)
 		case SERD_CURIE:
 			return expand_curie(env, node);
 		case SERD_BLANK:
-			return NULL;
+			return serd_node_copy(node);
 		}
 	}
 

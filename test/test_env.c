@@ -123,36 +123,27 @@ test_set_prefix(void)
 }
 
 static void
-test_expand(void)
+test_expand_untyped_literal(void)
 {
-	SerdNode* const name    = serd_new_string("eg.1");
-	SerdNode* const eg      = serd_new_uri(NS_EG);
-	SerdNode* const blank   = serd_new_blank("b1");
-	SerdNode* const rel     = serd_new_uri("rel");
-	SerdNode* const base    = serd_new_uri("http://example.org/b/");
-	SerdNode* const c1      = serd_new_curie("eg.1:foo");
-	SerdNode* const c1_full = serd_new_uri("http://example.org/foo");
-	SerdNode* const c2      = serd_new_curie("hm:what");
-	SerdNode* const type    = serd_new_uri("Type");
-	SerdNode* const typed   = serd_new_typed_literal("data", type);
-	SerdEnv* const  env     = serd_env_new(base);
+	SerdNode* const untyped = serd_new_string("data");
+	SerdEnv* const  env     = serd_env_new(NULL);
 
-	assert(!serd_env_set_prefix(env, name, eg));
+	SerdNode* const untyped_out = serd_env_expand(env, untyped);
+	assert(serd_node_equals(untyped_out, untyped));
+	serd_node_free(untyped_out);
 
-	assert(!serd_env_expand(env, name));
-	assert(!serd_env_expand(env, blank));
+	serd_env_free(env);
+	serd_node_free(untyped);
+}
 
-	// Expand CURIE
-	SerdNode* const c1_out = serd_env_expand(env, c1);
-	assert(serd_node_equals(c1_out, c1_full));
-	serd_node_free(c1_out);
+static void
+test_expand_uri_datatype(void)
+{
+	SerdNode* const base  = serd_new_uri("http://example.org/b/");
+	SerdNode* const type  = serd_new_uri("Type");
+	SerdNode* const typed = serd_new_typed_literal("data", type);
+	SerdEnv* const  env   = serd_env_new(base);
 
-	// Expand relative URI
-	SerdNode* const rel_out = serd_env_expand(env, rel);
-	assert(!strcmp(serd_node_string(rel_out), "http://example.org/b/rel"));
-	serd_node_free(rel_out);
-
-	// Expand literal with URI datatype
 	SerdNode* const typed_out = serd_env_expand(env, typed);
 	assert(typed_out);
 	assert(!strcmp(serd_node_string(typed_out), "data"));
@@ -161,19 +152,139 @@ test_expand(void)
 	               "http://example.org/b/Type"));
 	serd_node_free(typed_out);
 
-	assert(!serd_env_expand(env, c2));
+	serd_env_free(env);
+	serd_node_free(typed);
+	serd_node_free(type);
+	serd_node_free(base);
+}
+
+static void
+test_expand_bad_uri_datatype(void)
+{
+	SerdNode* const type  = serd_new_uri("Type");
+	SerdNode* const typed = serd_new_typed_literal("data", type);
+	SerdEnv* const  env   = serd_env_new(NULL);
+
+	assert(!serd_env_expand(env, typed));
 
 	serd_env_free(env);
 	serd_node_free(typed);
 	serd_node_free(type);
-	serd_node_free(c2);
-	serd_node_free(c1_full);
-	serd_node_free(c1);
-	serd_node_free(base);
-	serd_node_free(rel);
-	serd_node_free(blank);
+}
+
+static void
+test_expand_curie_datatype(void)
+{
+	SerdNode* const name  = serd_new_string("eg");
+	SerdNode* const eg    = serd_new_uri(NS_EG);
+	SerdNode* const type  = serd_new_curie("eg:Type");
+	SerdNode* const typed = serd_new_typed_literal("data", type);
+	SerdEnv* const  env   = serd_env_new(NULL);
+
+	assert(!serd_env_set_prefix(env, name, eg));
+
+	SerdNode* const typed_out = serd_env_expand(env, typed);
+	assert(typed_out);
+	assert(!strcmp(serd_node_string(typed_out), "data"));
+	assert(serd_node_datatype(typed_out));
+	assert(!strcmp(serd_node_string(serd_node_datatype(typed_out)),
+	               "http://example.org/Type"));
+	serd_node_free(typed_out);
+
+	serd_env_free(env);
+	serd_node_free(typed);
+	serd_node_free(type);
 	serd_node_free(eg);
 	serd_node_free(name);
+}
+
+static void
+test_expand_bad_curie_datatype(void)
+{
+	SerdNode* const type  = serd_new_curie("eg:Type");
+	SerdNode* const typed = serd_new_typed_literal("data", type);
+	SerdEnv* const  env   = serd_env_new(NULL);
+
+	assert(!serd_env_expand(env, typed));
+
+	serd_env_free(env);
+	serd_node_free(typed);
+	serd_node_free(type);
+}
+
+static void
+test_expand_uri(void)
+{
+	SerdNode* const rel  = serd_new_uri("rel");
+	SerdNode* const base = serd_new_uri("http://example.org/b/");
+	SerdEnv* const  env  = serd_env_new(base);
+
+	SerdNode* const rel_out = serd_env_expand(env, rel);
+	assert(!strcmp(serd_node_string(rel_out), "http://example.org/b/rel"));
+	serd_node_free(rel_out);
+
+	serd_env_free(env);
+	serd_node_free(base);
+	serd_node_free(rel);
+}
+
+static void
+test_expand_bad_uri(void)
+{
+	SerdNode* const bad_uri = serd_new_uri("rel");
+	SerdEnv* const  env     = serd_env_new(NULL);
+
+	assert(!serd_env_expand(env, bad_uri));
+
+	serd_env_free(env);
+	serd_node_free(bad_uri);
+}
+
+static void
+test_expand_curie(void)
+{
+	SerdNode* const name  = serd_new_string("eg.1");
+	SerdNode* const eg    = serd_new_uri(NS_EG);
+	SerdNode* const curie = serd_new_curie("eg.1:foo");
+	SerdEnv* const  env   = serd_env_new(NULL);
+
+	assert(!serd_env_set_prefix(env, name, eg));
+
+	SerdNode* const curie_out = serd_env_expand(env, curie);
+	assert(curie_out);
+	assert(!strcmp(serd_node_string(curie_out), "http://example.org/foo"));
+	serd_node_free(curie_out);
+
+	serd_env_free(env);
+	serd_node_free(curie);
+	serd_node_free(eg);
+	serd_node_free(name);
+}
+
+static void
+test_expand_bad_curie(void)
+{
+	SerdNode* const curie = serd_new_curie("eg.1:foo");
+	SerdEnv* const  env   = serd_env_new(NULL);
+
+	assert(!serd_env_expand(env, curie));
+
+	serd_env_free(env);
+	serd_node_free(curie);
+}
+
+static void
+test_expand_blank(void)
+{
+	SerdNode* const blank = serd_new_blank("b1");
+	SerdEnv* const  env   = serd_env_new(NULL);
+
+	SerdNode* const blank_out = serd_env_expand(env, blank);
+	assert(serd_node_equals(blank_out, blank));
+	serd_node_free(blank_out);
+
+	serd_env_free(env);
+	serd_node_free(blank);
 }
 
 static void
@@ -187,8 +298,6 @@ test_qualify(void)
 	SerdEnv* const  env  = serd_env_new(NULL);
 
 	assert(!serd_env_set_prefix(env, name, eg));
-
-	assert(!serd_env_expand(env, name));
 
 	SerdNode* const u1_out = serd_env_qualify(env, u1);
 	assert(serd_node_equals(u1_out, c1));
@@ -246,7 +355,16 @@ main(void)
 	test_null();
 	test_base_uri();
 	test_set_prefix();
-	test_expand();
+	test_expand_untyped_literal();
+	test_expand_uri_datatype();
+	test_expand_bad_uri_datatype();
+	test_expand_curie_datatype();
+	test_expand_bad_curie_datatype();
+	test_expand_uri();
+	test_expand_bad_uri();
+	test_expand_curie();
+	test_expand_bad_curie();
+	test_expand_blank();
 	test_qualify();
 	test_equals();
 	return 0;

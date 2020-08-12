@@ -1183,13 +1183,15 @@ serd_env_qualify(const SerdEnv* SERD_NULLABLE env,
                  const SerdNode* SERD_NONNULL uri);
 
 /**
-   Expand `node`, transforming CURIEs into URIs.
+   Expand `node`, transforming CURIEs and URI references into absolute URIs.
 
    If `node` is a relative URI reference, it is expanded to a full URI if
    possible.  If `node` is a literal, its datatype is expanded if necessary.
    If `node` is a CURIE, it is expanded to a full URI if possible.
 
-   Returns null if `node` can not be expanded.
+   For simple nodes that do not require expansion, a copy is returned.  Null is
+   returned if `node` is/contains a CURIE or relative URI that can not be
+   expanded.
 */
 SERD_API
 SerdNode* SERD_ALLOCATED
