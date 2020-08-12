@@ -163,23 +163,22 @@ serd_env_find(const SerdEnv* env,
 }
 
 static void
-serd_env_add(SerdEnv*        env,
-             const SerdNode* name,
-             const SerdNode* uri)
+serd_env_add(SerdEnv* env, const SerdNode* name, SerdNode* uri)
 {
 	const char*       name_str = serd_node_string(name);
 	SerdPrefix* const prefix   = serd_env_find(env, name_str, name->n_bytes);
 	if (prefix) {
 		if (!serd_node_equals(prefix->uri, uri)) {
-			SerdNode* old_prefix_uri = prefix->uri;
-			prefix->uri = serd_node_copy(uri);
-			serd_node_free(old_prefix_uri);
+			serd_node_free(prefix->uri);
+			prefix->uri = uri;
+		} else {
+			serd_node_free(uri);
 		}
 	} else {
 		env->prefixes = (SerdPrefix*)realloc(
 			env->prefixes, (++env->n_prefixes) * sizeof(SerdPrefix));
 		env->prefixes[env->n_prefixes - 1].name = serd_node_copy(name);
-		env->prefixes[env->n_prefixes - 1].uri  = serd_node_copy(uri);
+		env->prefixes[env->n_prefixes - 1].uri  = uri;
 	}
 }
 
@@ -192,7 +191,7 @@ serd_env_set_prefix(SerdEnv*        env,
 		return SERD_ERR_BAD_ARG;
 	} else if (serd_uri_string_has_scheme(serd_node_string(uri))) {
 		// Set prefix to absolute URI
-		serd_env_add(env, name, uri);
+		serd_env_add(env, name, serd_node_copy(uri));
 	} else if (!env->base_uri_node) {
 		return SERD_ERR_BAD_ARG;
 	} else {
@@ -202,7 +201,6 @@ serd_env_set_prefix(SerdEnv*        env,
 
 		// Set prefix to resolved (absolute) URI
 		serd_env_add(env, name, abs_uri);
-		serd_node_free(abs_uri);
 	}
 	return SERD_SUCCESS;
 }
