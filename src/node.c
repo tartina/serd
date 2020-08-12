@@ -89,6 +89,32 @@ serd_node_check_padding(const SerdNode* node)
 #endif
 }
 
+static size_t
+serd_uri_string_length(const SerdURI* uri)
+{
+	size_t len = uri->path_base.len;
+
+#define ADD_LEN(field, n_delims) \
+	if ((field).len) { len += (field).len + (n_delims); }
+
+	ADD_LEN(uri->path,      1)  // + possible leading `/'
+	ADD_LEN(uri->scheme,    1)  // + trailing `:'
+	ADD_LEN(uri->authority, 2)  // + leading `//'
+	ADD_LEN(uri->query,     1)  // + leading `?'
+	ADD_LEN(uri->fragment,  1)  // + leading `#'
+
+	return len + 2;  // + 2 for authority `//'
+}
+
+static size_t
+string_sink(const void* buf, size_t size, size_t nmemb, void* stream)
+{
+	char** ptr = (char**)stream;
+	memcpy(*ptr, buf, size * nmemb);
+	*ptr += size * nmemb;
+	return nmemb;
+}
+
 size_t
 serd_node_total_size(const SerdNode* node)
 {
@@ -387,32 +413,6 @@ serd_node_compare(const SerdNode* a, const SerdNode* b)
 	return cmp ? cmp
 	           : serd_node_compare(serd_node_maybe_get_meta_c(a),
 	                               serd_node_maybe_get_meta_c(b));
-}
-
-static size_t
-serd_uri_string_length(const SerdURI* uri)
-{
-	size_t len = uri->path_base.len;
-
-#define ADD_LEN(field, n_delims) \
-	if ((field).len) { len += (field).len + (n_delims); }
-
-	ADD_LEN(uri->path,      1)  // + possible leading `/'
-	ADD_LEN(uri->scheme,    1)  // + trailing `:'
-	ADD_LEN(uri->authority, 2)  // + leading `//'
-	ADD_LEN(uri->query,     1)  // + leading `?'
-	ADD_LEN(uri->fragment,  1)  // + leading `#'
-
-	return len + 2;  // + 2 for authority `//'
-}
-
-static size_t
-string_sink(const void* buf, size_t size, size_t nmemb, void* stream)
-{
-	char** ptr = (char**)stream;
-	memcpy(*ptr, buf, size * nmemb);
-	*ptr += size * nmemb;
-	return nmemb;
 }
 
 SerdNode*
