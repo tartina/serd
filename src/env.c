@@ -303,12 +303,28 @@ expand_literal(const SerdEnv* env, const SerdNode* node)
 {
 	assert(serd_node_type(node) == SERD_LITERAL);
 
-	SerdNode* datatype = serd_env_expand(env, serd_node_datatype(node));
-	if (datatype) {
-		const char* str = serd_node_string(node);
-		SerdNode*   ret = serd_new_typed_literal(str, datatype);
-		serd_node_free(datatype);
-		return ret;
+	const SerdNode* const datatype = serd_node_datatype(node);
+	if (datatype && serd_node_type(datatype) == SERD_CURIE) {
+		SerdStringView prefix;
+		SerdStringView suffix;
+		if (!serd_env_expand_in_place(env, datatype, &prefix, &suffix)) {
+			return serd_new_typed_literal_expanded(serd_node_string(node),
+			                                       serd_node_length(node),
+			                                       serd_node_flags(node),
+			                                       prefix,
+			                                       suffix);
+		}
+	} else if (datatype && serd_node_type(datatype) == SERD_URI) {
+		SerdURI datatype_uri;
+		serd_uri_parse(serd_node_string(datatype), &datatype_uri);
+
+		SerdURI abs_datatype_uri;
+		serd_uri_resolve(&datatype_uri, &env->base_uri, &abs_datatype_uri);
+
+		return serd_new_typed_literal_uri(serd_node_string(node),
+		                                  serd_node_length(node),
+		                                  serd_node_flags(node),
+		                                  abs_datatype_uri);
 	}
 
 	return NULL;

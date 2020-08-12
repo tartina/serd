@@ -229,6 +229,70 @@ serd_new_plain_literal_i(const char*   str,
 	return node;
 }
 
+/// Internal implementation of serd_new_typed_literal from datatype URI parts
+SerdNode*
+serd_new_typed_literal_expanded(const char*          str,
+                                const size_t         str_len,
+                                const SerdNodeFlags  flags,
+                                const SerdStringView datatype_prefix,
+                                const SerdStringView datatype_suffix)
+{
+	const size_t datatype_uri_len = datatype_prefix.len + datatype_suffix.len;
+	const size_t len              = serd_node_pad_size(str_len);
+	const size_t total_len        = len + sizeof(SerdNode) + datatype_uri_len;
+
+	SerdNode* node =
+	    serd_node_malloc(total_len, flags | SERD_HAS_DATATYPE, SERD_LITERAL);
+
+	memcpy(serd_node_buffer(node), str, str_len);
+	node->n_bytes = str_len;
+
+	SerdNode* const datatype_node = node + 1 + (len / sizeof(SerdNode));
+	char* const     datatype_buf  = serd_node_buffer(datatype_node);
+
+	datatype_node->n_bytes = datatype_uri_len;
+	datatype_node->type    = SERD_URI;
+	memcpy(datatype_buf, datatype_prefix.buf, datatype_prefix.len);
+	memcpy(datatype_buf + datatype_prefix.len,
+	       datatype_suffix.buf,
+	       datatype_suffix.len);
+
+	serd_node_check_padding(datatype_node);
+	serd_node_check_padding(node);
+	return node;
+}
+
+/// Internal implementation of serd_new_typed_literal from a parsed datatype URI
+SerdNode*
+serd_new_typed_literal_uri(const char*         str,
+                           const size_t        str_len,
+                           const SerdNodeFlags flags,
+                           const SerdURI       datatype_uri)
+{
+	const size_t datatype_uri_len = serd_uri_string_length(&datatype_uri);
+	const size_t len              = serd_node_pad_size(str_len);
+	const size_t total_len        = len + sizeof(SerdNode) + datatype_uri_len;
+
+	SerdNode* node =
+	    serd_node_malloc(total_len, flags | SERD_HAS_DATATYPE, SERD_LITERAL);
+
+	memcpy(serd_node_buffer(node), str, str_len);
+	node->n_bytes = str_len;
+
+	SerdNode* const datatype_node = node + 1 + (len / sizeof(SerdNode));
+	char*           ptr           = serd_node_buffer(datatype_node);
+
+	const size_t actual_len = serd_uri_serialise(&datatype_uri, string_sink, &ptr);
+
+	serd_node_buffer(datatype_node)[actual_len] = '\0';
+	datatype_node->n_bytes = actual_len;
+	datatype_node->type    = SERD_URI;
+
+	serd_node_check_padding(datatype_node);
+	serd_node_check_padding(node);
+	return node;
+}
+
 /// Internal pre-measured implementation of serd_new_typed_literal
 static SerdNode*
 serd_new_typed_literal_i(const char*   str,
@@ -241,23 +305,11 @@ serd_new_typed_literal_i(const char*   str,
 	assert(datatype_uri);
 	assert(strcmp(datatype_uri, NS_RDF "langString"));
 
-	flags |= SERD_HAS_DATATYPE;
+	const SerdStringView datatype_prefix = {datatype_uri, datatype_uri_len};
+	const SerdStringView datatype_suffix = {"", 0};
 
-	const size_t len       = serd_node_pad_size(str_len);
-	const size_t total_len = len + sizeof(SerdNode) + datatype_uri_len;
-
-	SerdNode* node = serd_node_malloc(total_len, flags, SERD_LITERAL);
-	memcpy(serd_node_buffer(node), str, str_len);
-	node->n_bytes = str_len;
-
-	SerdNode* datatype_node = node + 1 + (len / sizeof(SerdNode));
-	datatype_node->n_bytes  = datatype_uri_len;
-	datatype_node->type     = SERD_URI;
-	memcpy(serd_node_buffer(datatype_node), datatype_uri, datatype_uri_len);
-	serd_node_check_padding(datatype_node);
-
-	serd_node_check_padding(node);
-	return node;
+	return serd_new_typed_literal_expanded(
+	    str, str_len, flags, datatype_prefix, datatype_suffix);
 }
 
 SerdNode*
@@ -445,20 +497,22 @@ serd_node_resolve(const SerdNode* node, const SerdNode* base)
 SerdNode*
 serd_new_resolved_uri_i(const char* str, const SerdURI* base)
 {
-	SerdNode* result = NULL;
-	if (!str || str[0] == '\0') {
+	if (serd_uri_string_has_scheme(str)) {
+		// Already absolute
+		return serd_new_uri(str);
+	} else if (!base || !base->scheme.len) {
+		// Base URI isn't given or is relative, can't resolve an absolute URI
+		return NULL;
+	} else if (!str || str[0] == '\0') {
 		// Empty URI => Base URI, or nothing if no base is given
-		result = base ? serd_new_from_uri(base, NULL) : NULL;
-	} else {
-		SerdURI uri;
-		serd_uri_parse(str, &uri);
-		result = serd_new_from_uri(&uri, base);
+		return serd_new_from_uri(base, NULL);
 	}
 
-	if (!serd_uri_string_has_scheme(serd_node_string(result))) {
-		serd_node_free(result);
-		return NULL;
-	}
+	SerdURI uri;
+	serd_uri_parse(str, &uri);
+	SerdNode* const result = serd_new_from_uri(&uri, base);
+
+	assert(serd_uri_string_has_scheme(serd_node_string(result)));
 
 	return result;
 }

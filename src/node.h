@@ -75,4 +75,17 @@ serd_node_zero_pad(SerdNode* node);
 SerdNode*
 serd_new_resolved_uri_i(const char* str, const SerdURI* base);
 
+SerdNode*
+serd_new_typed_literal_expanded(const char*    str,
+                                size_t         str_len,
+                                SerdNodeFlags  flags,
+                                SerdStringView datatype_prefix,
+                                SerdStringView datatype_suffix);
+
+SerdNode*
+serd_new_typed_literal_uri(const char*   str,
+                           size_t        str_len,
+                           SerdNodeFlags flags,
+                           SerdURI       datatype_uri);
+
 #endif  // SERD_NODE_H
