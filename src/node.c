@@ -234,6 +234,7 @@ SerdNode*
 serd_new_typed_literal_expanded(const char*          str,
                                 const size_t         str_len,
                                 const SerdNodeFlags  flags,
+                                const SerdNodeType   datatype_type,
                                 const SerdStringView datatype_prefix,
                                 const SerdStringView datatype_suffix)
 {
@@ -251,7 +252,7 @@ serd_new_typed_literal_expanded(const char*          str,
 	char* const     datatype_buf  = serd_node_buffer(datatype_node);
 
 	datatype_node->n_bytes = datatype_uri_len;
-	datatype_node->type    = SERD_URI;
+	datatype_node->type    = datatype_type;
 	memcpy(datatype_buf, datatype_prefix.buf, datatype_prefix.len);
 	memcpy(datatype_buf + datatype_prefix.len,
 	       datatype_suffix.buf,
@@ -298,18 +299,19 @@ static SerdNode*
 serd_new_typed_literal_i(const char*   str,
                          const size_t  str_len,
                          SerdNodeFlags flags,
-                         const char*   datatype_uri,
-                         const size_t  datatype_uri_len)
+                         SerdNodeType  datatype_type,
+                         const char*   datatype,
+                         const size_t  datatype_len)
 {
 	assert(str);
-	assert(datatype_uri);
-	assert(strcmp(datatype_uri, NS_RDF "langString"));
+	assert(datatype);
+	assert(strcmp(datatype, NS_RDF "langString"));
 
-	const SerdStringView datatype_prefix = {datatype_uri, datatype_uri_len};
+	const SerdStringView datatype_prefix = {datatype, datatype_len};
 	const SerdStringView datatype_suffix = {"", 0};
 
 	return serd_new_typed_literal_expanded(
-	    str, str_len, flags, datatype_prefix, datatype_suffix);
+		str, str_len, flags, datatype_type, datatype_prefix, datatype_suffix);
 }
 
 SerdNode*
@@ -332,7 +334,7 @@ serd_new_literal(const char*  str,
 		return serd_new_plain_literal_i(str, str_len, flags, lang, lang_len);
 	} else if (datatype_uri) {
 		return serd_new_typed_literal_i(
-		        str, str_len, flags, datatype_uri, datatype_uri_len);
+			str, str_len, flags, SERD_URI, datatype_uri, datatype_uri_len);
 	} else {
 		return serd_new_substring(str, str_len);
 	}
@@ -362,7 +364,8 @@ serd_new_typed_literal(const char* str, const SerdNode* datatype)
 	} else if (!datatype) {
 		return serd_new_string(str);
 	} else if (!strcmp(serd_node_buffer_c(datatype), NS_RDF "langString") ||
-	           serd_node_type(datatype) != SERD_URI) {
+	           (serd_node_type(datatype) != SERD_URI &&
+	            serd_node_type(datatype) != SERD_CURIE)) {
 		return NULL;
 	}
 
@@ -372,6 +375,7 @@ serd_new_typed_literal(const char* str, const SerdNode* datatype)
 	return serd_new_typed_literal_i(str,
 	                                str_len,
 	                                flags,
+	                                serd_node_type(datatype),
 	                                serd_node_string(datatype),
 	                                serd_node_length(datatype));
 }

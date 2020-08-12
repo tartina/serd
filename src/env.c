@@ -309,6 +309,7 @@ expand_literal(const SerdEnv* env, const SerdNode* node)
 			return serd_new_typed_literal_expanded(serd_node_string(node),
 			                                       serd_node_length(node),
 			                                       serd_node_flags(node),
+			                                       SERD_URI,
 			                                       prefix,
 			                                       suffix);
 		}
