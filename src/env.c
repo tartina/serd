@@ -60,8 +60,7 @@ serd_env_free(SerdEnv* env)
 }
 
 const SerdNode*
-serd_env_get_base_uri(const SerdEnv* env,
-                      SerdURI*       out)
+serd_env_base_uri(const SerdEnv* env, SerdURI* out)
 {
 	if (out) {
 		*out = env->base_uri;
