@@ -710,8 +710,15 @@ def test(tst):
         check([serdi, '-h'])
         check([serdi, '-k', '512', '-s', '<urn:eg:s> a <urn:eg:T> .'])
         check([serdi, os.devnull])
+
         with tempfile.TemporaryFile(mode='r') as stdin:
             check([serdi, '-'], stdin=stdin)
+
+        with tempfile.TemporaryFile(mode='w') as stdout:
+            cmd = [serdi, '-o', 'empty', '%s/serd.ttl' % srcdir]
+            check(cmd, stdout=stdout)
+            stdout.seek(0, 2)  # Seek to end
+            check(lambda: stdout.tell() == 0, name='empty output')
 
     with tst.group('BadCommands',
                    expected=1,
