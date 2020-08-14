@@ -301,21 +301,65 @@ double
 serd_strtod(const char* SERD_NONNULL str, size_t* SERD_NULLABLE end);
 
 /**
+   @}
+   @name Base64
+   @{
+*/
+
+/**
+   Return the number of bytes required to encode `size` bytes in base64.
+
+   @param size The number of input (binary) bytes to encode.
+   @param wrap_lines Wrap lines at 76 characters to conform to RFC 2045.
+   @return The length of the base64 encoding, excluding null terminator.
+*/
+SERD_CONST_API
+size_t
+serd_base64_encoded_length(size_t size, bool wrap_lines);
+
+/**
+   Return the maximum number of bytes required to decode `size` bytes of base64.
+
+   @param len The number of input (text) bytes to decode.
+   @return The required buffer size to decode `size` bytes of base64.
+*/
+SERD_CONST_API
+size_t
+serd_base64_decoded_size(size_t len);
+
+/**
+   Encode `size` bytes of `buf` into `str`, which must be large enough.
+
+   @param str Output buffer of at least serd_base64_encoded_length(size) bytes.
+   @param buf Input binary data.
+   @param size Number of bytes to encode from `buf`.
+   @param wrap_lines Wrap lines at 76 characters to conform to RFC 2045.
+   @return True iff `str` contains newlines.
+*/
+SERD_API
+bool
+serd_base64_encode(char* SERD_NONNULL       str,
+                   const void* SERD_NONNULL buf,
+                   size_t                   size,
+                   bool                     wrap_lines);
+
+/**
    Decode a base64 string.
 
    This function can be used to deserialise a blob node created with
    serd_new_blob().
 
+   @param buf Output buffer of at least serd_base64_decoded_size(size) bytes.
+   @param size Set to the size of the decoded data in bytes.
    @param str Base64 string to decode.
    @param len The length of `str`.
-   @param size Set to the size of the returned blob in bytes.
-   @return A newly allocated blob which must be freed with serd_free().
 */
 SERD_API
-void* SERD_ALLOCATED
-serd_base64_decode(const char* SERD_NONNULL str,
-                   size_t                   len,
-                   size_t* SERD_NONNULL     size);
+SerdStatus
+serd_base64_decode(void* SERD_NONNULL       buf,
+                   size_t* SERD_NONNULL     size,
+                   const char* SERD_NONNULL str,
+                   size_t                   len);
 
 /**
    @}

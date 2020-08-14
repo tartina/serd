@@ -243,6 +243,7 @@ def build(bld):
 
         # Test programs
         for prog in [('serdi_static', 'src/serdi.c'),
+                     ('test_base64', 'test/test_base64.c'),
                      ('test_cursor', 'test/test_cursor.c'),
                      ('test_env', 'test/test_env.c'),
                      ('test_free_null', 'test/test_free_null.c'),
@@ -601,6 +602,7 @@ def test(tst):
     srcdir = tst.path.abspath()
 
     with tst.group('Unit') as check:
+        check(['./test_base64'])
         check(['./test_cursor'])
         check(['./test_env'])
         check(['./test_free_null'])
