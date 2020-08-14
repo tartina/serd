@@ -53,9 +53,7 @@ on_statement(void*              handle,
              const SerdNode*    graph,
              const SerdNode*    subject,
              const SerdNode*    predicate,
-             const SerdNode*    object,
-             const SerdNode*    object_datatype,
-             const SerdNode*    object_lang)
+             const SerdNode*    object)
 {
 	(void)handle;
 	(void)flags;
@@ -63,8 +61,6 @@ on_statement(void*              handle,
 	(void)subject;
 	(void)predicate;
 	(void)object;
-	(void)object_datatype;
-	(void)object_lang;
 
 	++n_statement;
 	return SERD_SUCCESS;

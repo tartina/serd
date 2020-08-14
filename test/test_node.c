@@ -202,6 +202,32 @@ test_node_from_substring(void)
 	serd_node_free(a_b);
 }
 
+static void
+test_literal(void)
+{
+	SerdNode* hello2 = serd_new_literal("hello\"", NULL, NULL);
+	assert(serd_node_length(hello2) == 6 &&
+	       serd_node_flags(hello2) == SERD_HAS_QUOTE &&
+	       !strcmp(serd_node_string(hello2), "hello\""));
+	serd_node_free(hello2);
+
+	SerdNode* hello_l = serd_new_literal("hello_l\"", NULL, "en");
+	assert(serd_node_length(hello_l) == 8);
+	assert(!strcmp(serd_node_string(hello_l), "hello_l\""));
+	assert(serd_node_flags(hello_l) == (SERD_HAS_QUOTE | SERD_HAS_LANGUAGE));
+	assert(!strcmp(serd_node_string(serd_node_language(hello_l)), "en"));
+	serd_node_free(hello_l);
+
+	SerdNode* hello_dt =
+	    serd_new_literal("hello_dt\"", "http://example.org/Thing", NULL);
+	assert(serd_node_length(hello_dt) == 9);
+	assert(!strcmp(serd_node_string(hello_dt), "hello_dt\""));
+	assert(serd_node_flags(hello_dt) == (SERD_HAS_QUOTE | SERD_HAS_DATATYPE));
+	assert(!strcmp(serd_node_string(serd_node_datatype(hello_dt)),
+	               "http://example.org/Thing"));
+	serd_node_free(hello_dt);
+}
+
 int
 main(void)
 {
@@ -212,6 +238,7 @@ main(void)
 	test_node_equals();
 	test_node_from_string();
 	test_node_from_substring();
+	test_literal();
 
 	printf("Success\n");
 	return 0;

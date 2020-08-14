@@ -108,7 +108,7 @@ SERD_PURE_FUNC SerdNode* deref(SerdReader* reader, Ref ref);
 Ref pop_node(SerdReader* reader, Ref ref);
 
 SerdStatus
-emit_statement(SerdReader* reader, ReadContext ctx, Ref o, Ref d, Ref l);
+emit_statement(SerdReader* reader, ReadContext ctx, Ref o);
 
 SerdStatus read_n3_statement(SerdReader* reader);
 SerdStatus read_nquadsDoc(SerdReader* reader);
