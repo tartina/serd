@@ -135,7 +135,7 @@ read_UCHAR(SerdReader* reader, SerdNode* dest, uint32_t* char_code)
 
 // Read ECHAR escape, initial \ is already eaten by caller
 static inline SerdStatus
-read_ECHAR(SerdReader* reader, SerdNode* dest, SerdNodeFlags* flags)
+read_ECHAR(SerdReader* reader, SerdNode* dest)
 {
 	const int c = peek_byte(reader);
 	switch (c) {
@@ -146,11 +146,11 @@ read_ECHAR(SerdReader* reader, SerdNode* dest, SerdNodeFlags* flags)
 		eat_byte_safe(reader, 'b');
 		return push_byte(reader, dest, '\b');
 	case 'n':
-		*flags |= SERD_HAS_NEWLINE;
+		dest->flags |= SERD_HAS_NEWLINE;
 		eat_byte_safe(reader, 'n');
 		return push_byte(reader, dest, '\n');
 	case 'r':
-		*flags |= SERD_HAS_NEWLINE;
+		dest->flags |= SERD_HAS_NEWLINE;
 		eat_byte_safe(reader, 'r');
 		return push_byte(reader, dest, '\r');
 	case 'f':
@@ -234,15 +234,15 @@ read_utf8_code(SerdReader* reader, SerdNode* dest, uint32_t* code, uint8_t c)
 // Read one character (possibly multi-byte)
 // The first byte, c, has already been eaten by caller
 static inline SerdStatus
-read_character(SerdReader* reader, SerdNode* dest, SerdNodeFlags* flags, uint8_t c)
+read_character(SerdReader* reader, SerdNode* dest, uint8_t c)
 {
 	if (!(c & 0x80)) {
 		switch (c) {
 		case 0xA: case 0xD:
-			*flags |= SERD_HAS_NEWLINE;
+			dest->flags |= SERD_HAS_NEWLINE;
 			break;
 		case '"': case '\'':
-			*flags |= SERD_HAS_QUOTE;
+			dest->flags |= SERD_HAS_QUOTE;
 			break;
 		default:
 			break;
@@ -308,10 +308,7 @@ eat_delim(SerdReader* reader, const char delim)
 // STRING_LITERAL_LONG_QUOTE and STRING_LITERAL_LONG_SINGLE_QUOTE
 // Initial triple quotes are already eaten by caller
 static SerdStatus
-read_STRING_LITERAL_LONG(SerdReader*    reader,
-                         SerdNode*      ref,
-                         SerdNodeFlags* flags,
-                         uint8_t        q)
+read_STRING_LITERAL_LONG(SerdReader* reader, SerdNode* ref, uint8_t q)
 {
 	SerdStatus st = SERD_SUCCESS;
 
@@ -320,7 +317,7 @@ read_STRING_LITERAL_LONG(SerdReader*    reader,
 		if (c == '\\') {
 			eat_byte_safe(reader, c);
 			uint32_t code = 0;
-			if ((st = read_ECHAR(reader, ref, flags)) &&
+			if ((st = read_ECHAR(reader, ref)) &&
 			    (st = read_UCHAR(reader, ref, &code))) {
 				return r_err(reader, st,
 				             "invalid escape `\\%c'\n", peek_byte(reader));
@@ -333,15 +330,14 @@ read_STRING_LITERAL_LONG(SerdReader*    reader,
 				eat_byte_safe(reader, q3);
 				break;
 			}
-			*flags |= SERD_HAS_QUOTE;
+			ref->flags |= SERD_HAS_QUOTE;
 			push_byte(reader, ref, c);
-			st = read_character(reader, ref, flags, (uint8_t)q2);
+			st = read_character(reader, ref, (uint8_t)q2);
 		} else if (c == EOF) {
 			return r_err(reader, SERD_ERR_BAD_SYNTAX,
 			             "end of file in long string\n");
 		} else {
-			st = read_character(
-				reader, ref, flags, (uint8_t)eat_byte_safe(reader, c));
+			st = read_character(reader, ref, (uint8_t)eat_byte_safe(reader, c));
 		}
 	}
 
@@ -351,10 +347,7 @@ read_STRING_LITERAL_LONG(SerdReader*    reader,
 // STRING_LITERAL_QUOTE and STRING_LITERAL_SINGLE_QUOTE
 // Initial quote is already eaten by caller
 static SerdStatus
-read_STRING_LITERAL(SerdReader*    reader,
-                    SerdNode*      ref,
-                    SerdNodeFlags* flags,
-                    uint8_t        q)
+read_STRING_LITERAL(SerdReader* reader, SerdNode* ref, uint8_t q)
 {
 	SerdStatus st = SERD_SUCCESS;
 
@@ -370,7 +363,7 @@ read_STRING_LITERAL(SerdReader*    reader,
 			             "line end in short string\n");
 		case '\\':
 			eat_byte_safe(reader, c);
-			if ((st = read_ECHAR(reader, ref, flags)) &&
+			if ((st = read_ECHAR(reader, ref)) &&
 			    (st = read_UCHAR(reader, ref, &code))) {
 				return r_err(reader, st,
 				             "invalid escape `\\%c'\n", peek_byte(reader));
@@ -382,7 +375,7 @@ read_STRING_LITERAL(SerdReader*    reader,
 				return SERD_SUCCESS;
 			} else {
 				st = read_character(
-					reader, ref, flags, (uint8_t)eat_byte_safe(reader, c));
+					reader, ref, (uint8_t)eat_byte_safe(reader, c));
 			}
 		}
 	}
@@ -392,7 +385,7 @@ read_STRING_LITERAL(SerdReader*    reader,
 }
 
 static SerdStatus
-read_String(SerdReader* reader, SerdNode* node, SerdNodeFlags* flags)
+read_String(SerdReader* reader, SerdNode* node)
 {
 	const int q1 = peek_byte(reader);
 	eat_byte_safe(reader, q1);
@@ -401,7 +394,7 @@ read_String(SerdReader* reader, SerdNode* node, SerdNodeFlags* flags)
 	if (q2 == EOF) {
 		return r_err(reader, SERD_ERR_BAD_SYNTAX, "unexpected end of file\n");
 	} else if (q2 != q1) {  // Short string (not triple quoted)
-		return read_STRING_LITERAL(reader, node, flags, (uint8_t)q1);
+		return read_STRING_LITERAL(reader, node, (uint8_t)q1);
 	}
 
 	eat_byte_safe(reader, q2);
@@ -418,7 +411,7 @@ read_String(SerdReader* reader, SerdNode* node, SerdNodeFlags* flags)
 	}
 
 	eat_byte_safe(reader, q3);
-	return read_STRING_LITERAL_LONG(reader, node, flags, (uint8_t)q1);
+	return read_STRING_LITERAL_LONG(reader, node, (uint8_t)q1);
 }
 
 static inline bool
@@ -771,10 +764,7 @@ read_0_9(SerdReader* reader, SerdNode* str, bool at_least_one)
 }
 
 static SerdStatus
-read_number(SerdReader*    reader,
-            SerdNode**     dest,
-            SerdNodeFlags* flags,
-            bool*          ate_dot)
+read_number(SerdReader* reader, SerdNode** dest, bool* ate_dot)
 {
 	#define XSD_DECIMAL NS_XSD "decimal"
 	#define XSD_DOUBLE  NS_XSD "double"
@@ -825,13 +815,13 @@ read_number(SerdReader*    reader,
 		}
 		TRY(st, read_0_9(reader, *dest, true));
 		push_node(reader, SERD_URI, XSD_DOUBLE, sizeof(XSD_DOUBLE) - 1);
-		*flags |= SERD_HAS_DATATYPE;
+		(*dest)->flags |= SERD_HAS_DATATYPE;
 	} else if (has_decimal) {
 		push_node(reader, SERD_URI, XSD_DECIMAL, sizeof(XSD_DECIMAL) - 1);
-		*flags |= SERD_HAS_DATATYPE;
+		(*dest)->flags |= SERD_HAS_DATATYPE;
 	} else {
 		push_node(reader, SERD_URI, XSD_INTEGER, sizeof(XSD_INTEGER) - 1);
-		*flags |= SERD_HAS_DATATYPE;
+		(*dest)->flags |= SERD_HAS_DATATYPE;
 	}
 
 	return SERD_SUCCESS;
@@ -852,14 +842,11 @@ read_iri(SerdReader* reader, SerdNode** dest, bool* ate_dot)
 }
 
 static SerdStatus
-read_literal(SerdReader*    reader,
-             SerdNode**     dest,
-             SerdNodeFlags* flags,
-             bool*          ate_dot)
+read_literal(SerdReader* reader, SerdNode** dest, bool* ate_dot)
 {
 	*dest = push_node(reader, SERD_LITERAL, "", 0);
 
-	SerdStatus st = read_String(reader, *dest, flags);
+	SerdStatus st = read_String(reader, *dest);
 	if (st) {
 		*dest = NULL;
 		return st;
@@ -870,7 +857,7 @@ read_literal(SerdReader*    reader,
 	switch (peek_byte(reader)) {
 	case '@':
 		eat_byte_safe(reader, '@');
-		*flags |= SERD_HAS_LANGUAGE;
+		(*dest)->flags |= SERD_HAS_LANGUAGE;
 		if ((st = read_LANGTAG(reader, &lang))) {
 			return r_err(reader, st, "bad literal\n");
 		}
@@ -878,7 +865,7 @@ read_literal(SerdReader*    reader,
 	case '^':
 		eat_byte_safe(reader, '^');
 		eat_byte_check(reader, '^');
-		*flags |= SERD_HAS_DATATYPE;
+		(*dest)->flags |= SERD_HAS_DATATYPE;
 		if ((st = read_iri(reader, &datatype, ate_dot))) {
 			return r_err(reader, st, "bad literal\n");
 		}
@@ -1048,12 +1035,10 @@ read_object(SerdReader* reader, ReadContext* ctx, bool emit, bool* ate_dot)
 
 	const size_t orig_stack_size = reader->stack.size;
 
-	SerdStatus ret = SERD_FAILURE;
-
-	bool      simple   = (ctx->subject != 0);
-	SerdNode* o        = 0;
-	uint32_t  flags    = 0;
-	const int c        = peek_byte(reader);
+	SerdStatus ret    = SERD_FAILURE;
+	bool       simple = (ctx->subject != 0);
+	SerdNode*  o      = 0;
+	const int  c      = peek_byte(reader);
 	if (!fancy_syntax(reader)) {
 		switch (c) {
 		case '"': case ':': case '<': case '_': break;
@@ -1081,11 +1066,11 @@ read_object(SerdReader* reader, ReadContext* ctx, bool emit, bool* ate_dot)
 		break;
 	case '+': case '-': case '.': case '0': case '1': case '2': case '3':
 	case '4': case '5': case '6': case '7': case '8': case '9':
-		ret = read_number(reader, &o, &flags, ate_dot);
+		ret = read_number(reader, &o, ate_dot);
 		break;
 	case '\"':
 	case '\'':
-		ret = read_literal(reader, &o, &flags, ate_dot);
+		ret = read_literal(reader, &o, ate_dot);
 		break;
 	default:
 		/* Either a boolean literal, or a qname.  Read the prefix first, and if
@@ -1100,7 +1085,7 @@ read_object(SerdReader* reader, ReadContext* ctx, bool emit, bool* ate_dot)
 		     !memcmp(serd_node_string(o), "true", 4)) ||
 		    (o->n_bytes == 5 &&
 		     !memcmp(serd_node_string(o), "false", 5))) {
-			flags      = flags | SERD_HAS_DATATYPE;
+			o->flags |= SERD_HAS_DATATYPE;
 			o->type = SERD_LITERAL;
 			push_node(reader, SERD_URI, XSD_BOOLEAN, XSD_BOOLEAN_LEN);
 			ret = SERD_SUCCESS;
@@ -1112,10 +1097,6 @@ read_object(SerdReader* reader, ReadContext* ctx, bool emit, bool* ate_dot)
 				return r_err(reader, ret, "expected prefixed name\n");
 			}
 		}
-	}
-
-	if (!ret && simple && o) {
-		o->flags = flags;
 	}
 
 	if (!ret && emit && simple && o) {
