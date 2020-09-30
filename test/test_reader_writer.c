@@ -198,9 +198,22 @@ test_read_string(void)
 
 	// Test reading a string that ends exactly at the end of input (no newline)
 	assert(!serd_reader_start(reader, byte_source));
-
 	assert(!serd_reader_read_document(reader));
 	assert(n_statements == 1);
+	assert(!serd_reader_finish(reader));
+
+	// Test reading the same but as a chunk
+	serd_byte_source_free(byte_source);
+	n_statements = 0;
+	byte_source = serd_byte_source_new_string(
+		"<http://example.org/s> <http://example.org/p> "
+		"<http://example.org/o> , _:blank .",
+		NULL);
+
+	assert(!serd_reader_start(reader, byte_source));
+	assert(!serd_reader_read_chunk(reader));
+	assert(n_statements == 2);
+	assert(serd_reader_read_chunk(reader) == SERD_FAILURE);
 	assert(!serd_reader_finish(reader));
 
 	serd_reader_free(reader);
