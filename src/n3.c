@@ -988,7 +988,7 @@ read_BLANK_NODE_LABEL(SerdReader* reader, SerdNode** dest, bool* ate_dot)
 		*ate_dot = true;
 	}
 
-	if (fancy_syntax(reader)) {
+	if (fancy_syntax(reader) && !(reader->flags & SERD_READ_EXACT_BLANKS)) {
 		if (is_digit(buf[reader->bprefix_len + 1])) {
 			if ((buf[reader->bprefix_len]) == 'b') {
 				buf[reader->bprefix_len] = 'B';  // Prevent clash
