@@ -287,6 +287,7 @@ def build(bld):
             bld(features     = 'c cprogram',
                 source       = prog[1],
                 use          = 'libserd_profiled',
+                uselib       = 'PCRE',
                 target       = prog[0],
                 defines      = defines,
                 **test_args)
@@ -656,6 +657,39 @@ def test_suite(ctx,
             run_tests(test_class, instances, expected)
 
 
+def validation_test_suite(tst,
+                          base_uri,
+                          testdir,
+                          isyntax,
+                          osyntax,
+                          options=''):
+    srcdir = tst.path.abspath()
+    schemas = glob.glob(os.path.join(srcdir, 'schemas', '*.ttl'))
+
+    ns_serd    = 'http://drobilla.net/ns/serd#'
+    mf         = 'http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#'
+    mf_path    = os.path.join(srcdir, 'test', testdir, 'manifest.ttl')
+
+    model, instances = _load_rdf(mf_path)
+    for test_class, instances in instances.items():
+        if not test_class.startswith(ns_serd):
+            continue
+
+        tests_name = 'validate.%s' % test_class[test_class.find('#') + 1:]
+        with tst.group(tests_name) as check:
+            expected = 1 if 'Negative' in test_class else 0
+            for test in sorted(instances):
+                action_node = model[test][mf + 'action'][0]
+                name        = os.path.basename(action_node)
+                action      = os.path.join('test', 'validate', name)
+                rel_action  = os.path.join(os.path.relpath(srcdir), action)
+                command     = (['./serdi_static', '-V', '-o', 'empty'] +
+                               schemas + [rel_action])
+
+                if tst.env.HAVE_PCRE or name != 'bad-literal-pattern.ttl':
+                    check(command, expected=expected, name=action)
+
+
 def test(tst):
     import tempfile
 
@@ -790,6 +824,14 @@ def test(tst):
     test_suite(tst, serd_base + 'lax/', 'lax', None, 'Turtle')
     test_suite(tst, serd_base + 'terse/', 'terse', None, 'Turtle', ['-t'],
                output_syntax='Turtle')
+
+    # Serd validation test suite
+    with open('validation_earl.ttl', 'w') as report:
+        serd_base = 'http://drobilla.net/sw/serd/test/'
+        report.write('@prefix earl: <http://www.w3.org/ns/earl#> .\n'
+                     '@prefix dc: <http://purl.org/dc/elements/1.1/> .\n')
+        validation_test_suite(tst, serd_base + 'validate/', 'validate',
+                              None, 'Turtle', 'NTriples')
 
     # Standard test suites
     with open('earl.ttl', 'w') as report:
