@@ -736,6 +736,22 @@ serd_new_file_uri(const char* SERD_NONNULL  path,
                   const char* SERD_NULLABLE hostname);
 
 /**
+   Create a new file URI node for a file that exists on this system.
+
+   This is like serd_new_file_uri() except it resolves and canonicalizes the
+   path, so the returned node is always a complete file URI with a scheme and
+   absolute path that does not contain any dot references or links, or NULL if
+   this is impossible (for example, because the path does not exist).
+
+   This should be used wherever the URI for an existent file is required, for
+   example to set the base URI of a document.
+*/
+SERD_API
+SerdNode* SERD_ALLOCATED
+serd_new_real_file_uri(const char* SERD_NULLABLE path,
+                       const char* SERD_NULLABLE hostname);
+
+/**
    Create a new URI from a string, relative to a base URI.
 
    The URI is made relative iff if it a child of `base` and `root`.  The

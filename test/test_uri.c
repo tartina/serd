@@ -14,12 +14,20 @@
   OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
+#define _XOPEN_SOURCE 600 /* for mkstemp */
+
 #undef NDEBUG
 
 #include "serd/serd.h"
 
+#if defined(_WIN32) && !defined(__MINGW32__)
+#    include <io.h>
+#    define mkstemp(pat) _mktemp(pat)
+#endif
+
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static void
@@ -59,6 +67,24 @@ test_uri_parsing(void)
 	char* out_path = serd_file_uri_parse("file:///foo/%0Xbar", NULL);
 	assert(!strcmp(out_path, "/foo/bar"));
 	serd_free(out_path);
+}
+
+static void
+test_real_file_uri(void)
+{
+	char path[16];
+	strncpy(path, "serd_XXXXXX", sizeof(path));
+	assert(mkstemp(path) > 0);
+
+	SerdNode* const good = serd_new_real_file_uri(path, NULL);
+	assert(good);
+	assert(!strncmp(serd_node_string(good), "file://", 7));
+	serd_node_free(good);
+
+	SerdNode* const bad = serd_new_real_file_uri("not_a_file", NULL);
+	assert(!bad);
+
+	assert(!remove(path));
 }
 
 static void
@@ -134,6 +160,7 @@ int
 main(void)
 {
 	test_uri_parsing();
+	test_real_file_uri();
 	test_uri_from_string();
 	test_relative_uri();
 	test_uri_resolution();

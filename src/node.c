@@ -14,6 +14,8 @@
   OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
+#define _XOPEN_SOURCE 600 /* for realpath */
+
 #include "node.h"
 
 #include "decimal.h"
@@ -24,6 +26,11 @@
 #include "system.h"
 
 #include "serd/serd.h"
+
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN 1
+#include <windows.h>
+#endif
 
 #include <assert.h>
 #include <math.h>
@@ -542,6 +549,32 @@ is_uri_path_char(const char c)
 	}
 }
 
+static char*
+serd_realpath(const char* const path)
+{
+	if (!path) {
+		return NULL;
+	}
+
+#ifdef _WIN32
+	const DWORD size = GetFullPathName(path, 0, NULL, NULL);
+	if (size == 0) {
+		return NULL;
+	}
+
+	char* const out = (char*)calloc(size, 1);
+	const DWORD ret = GetFullPathName(path, MAX_PATH, out, NULL);
+	if (ret == 0 || ret >= size) {
+		free(out);
+		return NULL;
+	}
+
+	return out;
+#else
+	return realpath(path, NULL);
+#endif
+}
+
 SerdNode*
 serd_new_file_uri(const char* path, const char* hostname)
 {
@@ -580,6 +613,19 @@ serd_new_file_uri(const char* path, const char* hostname)
 	SerdNode* node = serd_new_uri((const char*)buffer.buf);
 	free(buffer.buf);
 	serd_node_check_padding(node);
+	return node;
+}
+
+SerdNode*
+serd_new_real_file_uri(const char* const path, const char* const hostname)
+{
+	char* const real_path = serd_realpath(path);
+	if (!real_path) {
+		return NULL;
+	}
+
+	SerdNode* const node = serd_new_file_uri(real_path, hostname);
+	free(real_path);
 	return node;
 }
 
