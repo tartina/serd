@@ -15,7 +15,6 @@
 */
 
 #include "reader.h"
-#include "system.h"
 
 #include "serd_internal.h"
 #include "world.h"
@@ -236,7 +235,7 @@ serd_reader_read_file(SerdReader* reader,
 		return SERD_ERR_BAD_ARG;
 	}
 
-	FILE* fd = serd_fopen(path, "rb");
+	FILE* fd = serd_world_fopen(reader->world, path, "rb");
 	if (!fd) {
 		serd_free(path);
 		return SERD_ERR_UNKNOWN;
