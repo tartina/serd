@@ -289,7 +289,7 @@ serd_strtod(const char* SERD_NONNULL str, size_t* SERD_NULLABLE end);
    Decode a base64 string.
 
    This function can be used to deserialise a blob node created with
-   serd_node_new_blob().
+   serd_new_blob().
 
    @param str Base64 string to decode.
    @param len The length of `str`.
@@ -435,19 +435,19 @@ serd_node_from_substring(SerdType                  type,
                          const char* SERD_NULLABLE str,
                          size_t                    len);
 
-/// Simple wrapper for serd_node_new_uri() to resolve a URI node
+/// Simple wrapper for serd_new_uri() to resolve a URI node
 SERD_API
 SerdNode
-serd_node_new_uri_from_node(const SerdNode* SERD_NONNULL uri_node,
-                            const SerdURI* SERD_NULLABLE  base,
-                            SerdURI* SERD_NULLABLE        out);
+serd_new_uri_from_node(const SerdNode* SERD_NONNULL uri_node,
+                       const SerdURI* SERD_NULLABLE base,
+                       SerdURI* SERD_NULLABLE       out);
 
-/// Simple wrapper for serd_node_new_uri() to resolve a URI string
+/// Simple wrapper for serd_new_uri() to resolve a URI string
 SERD_API
 SerdNode
-serd_node_new_uri_from_string(const char* SERD_NULLABLE    str,
-                              const SerdURI* SERD_NULLABLE base,
-                              SerdURI* SERD_NULLABLE       out);
+serd_new_uri_from_string(const char* SERD_NULLABLE    str,
+                         const SerdURI* SERD_NULLABLE base,
+                         SerdURI* SERD_NULLABLE       out);
 
 /**
    Create a new file URI node from a file system path and optional hostname.
@@ -460,9 +460,9 @@ serd_node_new_uri_from_string(const char* SERD_NULLABLE    str,
 */
 SERD_API
 SerdNode
-serd_node_new_file_uri(const char* SERD_NONNULL  path,
-                       const char* SERD_NULLABLE hostname,
-                       SerdURI* SERD_NULLABLE    out);
+serd_new_file_uri(const char* SERD_NONNULL  path,
+                  const char* SERD_NULLABLE hostname,
+                  SerdURI* SERD_NULLABLE    out);
 
 /**
    Create a new node by serialising `uri` into a new string.
@@ -476,9 +476,9 @@ serd_node_new_file_uri(const char* SERD_NONNULL  path,
 */
 SERD_API
 SerdNode
-serd_node_new_uri(const SerdURI* SERD_NONNULL  uri,
-                  const SerdURI* SERD_NULLABLE base,
-                  SerdURI* SERD_NULLABLE       out);
+serd_new_uri(const SerdURI* SERD_NONNULL  uri,
+             const SerdURI* SERD_NULLABLE base,
+             SerdURI* SERD_NULLABLE       out);
 
 /**
    Create a new node by serialising `uri` into a new relative URI.
@@ -494,10 +494,10 @@ serd_node_new_uri(const SerdURI* SERD_NONNULL  uri,
 */
 SERD_API
 SerdNode
-serd_node_new_relative_uri(const SerdURI* SERD_NONNULL  uri,
-                           const SerdURI* SERD_NULLABLE base,
-                           const SerdURI* SERD_NULLABLE root,
-                           SerdURI* SERD_NULLABLE       out);
+serd_new_relative_uri(const SerdURI* SERD_NONNULL  uri,
+                      const SerdURI* SERD_NULLABLE base,
+                      const SerdURI* SERD_NULLABLE root,
+                      SerdURI* SERD_NULLABLE       out);
 
 /**
    Create a new node by serialising `d` into an xsd:decimal string
@@ -516,12 +516,12 @@ serd_node_new_relative_uri(const SerdURI* SERD_NONNULL  uri,
 */
 SERD_API
 SerdNode
-serd_node_new_decimal(double d, unsigned frac_digits);
+serd_new_decimal(double d, unsigned frac_digits);
 
 /// Create a new node by serialising `i` into an xsd:integer string
 SERD_API
 SerdNode
-serd_node_new_integer(int64_t i);
+serd_new_integer(int64_t i);
 
 /**
    Create a node by serialising `buf` into an xsd:base64Binary string
@@ -535,7 +535,7 @@ serd_node_new_integer(int64_t i);
 */
 SERD_API
 SerdNode
-serd_node_new_blob(const void* SERD_NONNULL buf, size_t size, bool wrap_lines);
+serd_new_blob(const void* SERD_NONNULL buf, size_t size, bool wrap_lines);
 
 /**
    Make a deep copy of `node`.
