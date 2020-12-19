@@ -1,0 +1,32 @@
+---
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
+AlignEscapedNewlinesLeft: true
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AlwaysBreakAfterDefinitionReturnType: TopLevel
+AlwaysBreakAfterReturnType: TopLevel
+AlwaysBreakBeforeMultilineStrings: false
+BasedOnStyle: Mozilla
+BinPackArguments: false
+BinPackParameters: false
+Language: Cpp
+BraceWrapping:
+  AfterStruct:      false
+  AfterFunction:    true
+  AfterEnum:        false
+  AfterExternBlock: false
+BreakBeforeBraces: Custom
+ContinuationIndentWidth: 4
+Cpp11BracedListStyle: true
+IndentCaseLabels: false
+IndentPPDirectives: AfterHash
+IndentWidth:     4
+KeepEmptyLinesAtTheStartOfBlocks: false
+PenaltyReturnTypeOnItsOwnLine: 0
+SpacesInContainerLiterals: false
+Standard: Cpp11
+TabWidth: 4
+UseTab: AlignWithSpaces
+...

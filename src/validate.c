@@ -17,6 +17,7 @@
 #include "serd_config.h"
 
 #include "model.h"
+#include "rerex/rerex.h"
 #include "serd/serd.h"
 #include "world.h"
 
@@ -25,10 +26,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#ifdef HAVE_PCRE
-#include <pcre.h>
-#endif
 
 #define NS_owl  "http://www.w3.org/2002/07/owl#"
 #define NS_rdf  "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
@@ -198,45 +195,31 @@ is_subdatatype(ValidationContext* ctx,
 }
 
 static bool
-regexp_match(ValidationContext*   ctx,
-             const SerdStatement* pat_statement,
-             const char*          pat,
-             const char*          str)
+regex_match(ValidationContext* const   ctx,
+            const SerdStatement* const pattern_statement,
+            const char* const          regex,
+            const char* const          str)
 {
-#ifdef HAVE_PCRE
-	// Append a $ to the pattern so we only match if the entire string matches
-	const size_t len  = strlen(pat);
-	char* const  regx = (char*)malloc(len + 2);
-	memcpy(regx, pat, len);
-	regx[len]     = '$';
-	regx[len + 1] = '\0';
-
-	const char* err       = NULL;
-	int         erroffset = 0;
-	pcre*       re = pcre_compile(regx, PCRE_ANCHORED, &err, &erroffset, NULL);
-	free(regx);
-	if (!re) {
+	RerexPattern*     re  = NULL;
+	size_t            end = 0;
+	const RerexStatus st  = rerex_compile(regex, &end, &re);
+	if (st) {
 		VERRORF(ctx,
-		        pat_statement,
-		        "Error in pattern \"%s\" at offset %d (%s)\n",
-		        pat,
-		        erroffset,
-		        err);
+		        pattern_statement,
+		        "Error in pattern \"%s\" at offset %zu (%s)\n",
+		        regex,
+		        end,
+		        rerex_strerror(st));
 		return false;
 	}
 
-	const bool ret =
-		pcre_exec(re, NULL, str, (int)strlen(str), 0, 0, NULL, 0) >= 0;
+	RerexMatcher* matcher = rerex_new_matcher(re);
+	const bool ret = rerex_match(matcher, str);
 
-	pcre_free(re);
+	rerex_free_matcher(matcher);
+	rerex_free_pattern(re);
+
 	return ret;
-#else
-	(void)ctx;
-	(void)pat_statement;
-	(void)pat;
-	(void)str;
-#endif // HAVE_PCRE
-	return true;
 }
 
 static int
@@ -274,7 +257,7 @@ check_literal_restriction(ValidationContext*   ctx,
 	if (pat_statement) {
 		const SerdNode* pat_node = serd_statement_object(pat_statement);
 		const char*     pat      = serd_node_string(pat_node);
-		if (check(ctx, !regexp_match(ctx, pat_statement, pat, str))) {
+		if (check(ctx, !regex_match(ctx, pat_statement, pat, str))) {
 			VERRORF(ctx,
 			        statement,
 			        "Value \"%s\" does not match pattern \"%s\"\n",
@@ -863,10 +846,6 @@ serd_validate(const SerdModel* model)
 	ctx.model          = model;
 	ctx.n_errors       = 0;
 	ctx.n_restrictions = 0;
-
-#ifndef HAVE_PCRE
-	fprintf(stderr, "warning: Built without PCRE, datatypes not checked.\n");
-#endif
 
 	int        st = 0;
 	SerdRange* i  = serd_model_all(ctx.model);

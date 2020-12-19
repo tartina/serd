@@ -41,7 +41,6 @@ def options(ctx):
          'no-shared':    'do not build shared library',
          'static-progs': 'build programs as static binaries',
          'largefile':    'build with large file support on 32-bit systems',
-         'no-pcre':      'do not use PCRE, even if present',
          'no-posix':     'do not use POSIX functions, even if present'})
 
 
@@ -212,23 +211,6 @@ def configure(conf):
                   fragment    = 'int main(void) {return __builtin_clzll(0);}',
                   mandatory   = False)
 
-    if not Options.options.no_pcre:
-        autowaf.check_pkg(conf, 'libpcre',
-                          uselib_store='PCRE',
-                          mandatory=False)
-
-    if conf.env.HAVE_PCRE:
-        if conf.check(cflags=['-pthread'], mandatory=False):
-            conf.env.PTHREAD_CFLAGS = ['-pthread']
-            if conf.env.CC_NAME != 'clang':
-                conf.env.PTHREAD_LINKFLAGS = ['-pthread']
-        elif conf.check(linkflags=['-lpthread'], mandatory=False):
-            conf.env.PTHREAD_CFLAGS    = []
-            conf.env.PTHREAD_LINKFLAGS = ['-lpthread']
-        else:
-            conf.env.PTHREAD_CFLAGS    = []
-            conf.env.PTHREAD_LINKFLAGS = []
-
     # Set up environment for building/using as a subproject
     autowaf.set_lib_env(conf, 'serd', SERD_VERSION,
                         include_path=str(conf.path.find_node('include')))
@@ -284,7 +266,8 @@ lib_source = ['src/base64.c',
               'src/writer.c',
               'src/zix/btree.c',
               'src/zix/digest.c',
-              'src/zix/hash.c']
+              'src/zix/hash.c',
+              'subprojects/rerex/src/rerex.c']
 
 
 def build(bld):
@@ -313,10 +296,9 @@ def build(bld):
 
     defines = []
     lib_args = {'export_includes': ['include'],
-                'includes':        ['.', 'include', './src'],
+                'includes':        ['.', 'include', './src', './subprojects/rerex/include'],
                 'cflags':          ['-fvisibility=hidden'],
                 'lib':             ['m'],
-                'use':             ['PCRE'],
                 'vnum':            SERD_VERSION,
                 'install_path':    '${LIBDIR}'}
     if bld.env.MSVC_COMPILER:
@@ -330,7 +312,6 @@ def build(bld):
             source          = lib_source,
             name            = 'libserd',
             target          = 'serd-%s' % SERD_MAJOR_VERSION,
-            uselib          = 'PCRE',
             defines         = defines + ['SERD_SHARED', 'SERD_INTERNAL'],
             **lib_args)
 
@@ -340,7 +321,6 @@ def build(bld):
             source          = lib_source,
             name            = 'libserd_static',
             target          = 'serd-%s' % SERD_MAJOR_VERSION,
-            uselib          = 'PCRE',
             defines         = defines + ['SERD_INTERNAL'],
             **lib_args)
 
@@ -381,7 +361,7 @@ def build(bld):
 
     if bld.env.BUILD_TESTS:
         coverage_flags = [''] if bld.env.NO_COVERAGE else ['--coverage']
-        test_args = {'includes':     ['.', 'include', './src'],
+        test_args = {'includes':     ['.', 'include', './src', './subprojects/rerex/include'],
                      'cflags':       coverage_flags,
                      'linkflags':    coverage_flags,
                      'lib':          lib_args['lib'],
@@ -392,7 +372,6 @@ def build(bld):
             source       = lib_source,
             name         = 'libserd_profiled',
             target       = 'serd_profiled',
-            uselib       = 'PCRE',
             defines      = defines + ['SERD_INTERNAL'],
             **test_args)
 
@@ -421,7 +400,6 @@ def build(bld):
             bld(features     = 'c cprogram',
                 source       = prog[1],
                 use          = 'libserd_profiled',
-                uselib       = 'PCRE',
                 target       = prog[0],
                 defines      = defines,
                 **test_args)
@@ -454,7 +432,6 @@ def build(bld):
                   target       = 'serdi',
                   includes     = ['.', 'include', './src'],
                   use          = 'libserd',
-                  uselib       = 'PCRE',
                   lib          = lib_args['lib'],
                   cflags       = bld.env.PTHREAD_CFLAGS,
                   linkflags    = bld.env.PTHREAD_LINKFLAGS,
@@ -855,8 +832,7 @@ def validation_test_suite(tst,
                 command     = (['./serdi_static', '-V', '-o', 'empty'] +
                                schemas + [rel_action])
 
-                if tst.env.HAVE_PCRE or name != 'bad-literal-pattern.ttl':
-                    check(command, expected=expected, name=action)
+                check(command, expected=expected, name=action)
 
 
 def test(tst):
